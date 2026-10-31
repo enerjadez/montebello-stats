@@ -239,7 +239,7 @@
   .date-stepper button { width: 40px; padding: 0; font-size: 1.3rem; line-height: 1; }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
   .btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); background: transparent; }
-  input[type="date"], input[type="email"], input[type="search"], input[type="number"], select {
+  input[type="date"], input[type="time"], input[type="email"], input[type="search"], input[type="number"], select {
     min-height: 40px;
     border: 1px solid var(--line);
     background: var(--input);
@@ -466,6 +466,35 @@
   .view-nav { display: flex; gap: 8px; padding: 0 16px 8px; }
   .view-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
   .sheet { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  details.fold > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 700;
+    list-style: none;
+  }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::before { content: "\25B8"; width: 1.1em; color: var(--accent); }
+  details.fold[open] > summary::before { content: "\25BE"; }
+  .hours-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #fold-hours[open] { flex: 1; min-height: 0; overflow: auto; }
+  #fold-hours:not([open]) { flex: 0 0 auto; }
+  #fold-hours[open] .table-card { min-height: calc(100% - 72px); }
+  .add-record {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+    padding: 8px;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .add-record .field { margin: 0; min-width: 120px; }
+  .ov-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ov-note-hit { border-radius: 6px; background: color-mix(in srgb, var(--accent) 18%, transparent); }
   .overview { flex: 1; min-height: 0; overflow: auto; padding-bottom: 8px; }
   .ov-filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; padding: 4px 16px 0; }
   .ov-filters .field { margin: 0; min-width: 150px; }
@@ -559,6 +588,10 @@
     .sheet-more { margin-left: 12px; margin-right: 12px; }
     .help { display: none; }
     .table-card { margin: 0 8px 8px; }
+    .add-record { display: grid; grid-template-columns: 1fr 1fr; }
+    .add-record .field { min-width: 0; }
+    .add-record button { grid-column: 1 / -1; }
+    details.fold > summary { padding-left: 12px; padding-right: 12px; }
     .table-wrap { -webkit-overflow-scrolling: touch; }
     .c-time { min-width: 92px; }
     .slot-time { flex-direction: column; gap: 0; }
@@ -568,7 +601,7 @@
     .status-bar { padding: 0 12px 8px; }
     .ov-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 12px 0; }
     .ov-filters .field, .ov-filters input { width: 100%; min-width: 0; }
-    .ov-filters .field:first-child, .ov-ranges { grid-column: 1 / -1; }
+    .ov-filters .field:nth-child(-n + 2), .ov-ranges, .ov-filter-actions { grid-column: 1 / -1; }
     .ov-ranges { display: grid; grid-template-columns: repeat(4, 1fr); }
     .ov-ranges .btn { width: 100%; padding: 0 4px; font-size: 0.8rem; }
     .ov-cards { grid-template-columns: 1fr 1fr; padding: 8px 12px 4px; }
@@ -618,6 +651,8 @@
   </nav>
   <div id="storage-error" class="storage-error" hidden></div>
   <div id="sheet" class="sheet">
+  <details class="fold" id="fold-tools" open>
+    <summary>Day tools</summary>
   <div class="toolbar no-print">
     <label class="date-field"><span class="sr-only">Date</span><input type="date" id="work-date"></label>
     <button type="button" class="btn" id="today-btn">Today</button>
@@ -641,6 +676,10 @@
     <p>Each row is one hour. Patients is the number of people. Acute is the number of acute scripts. Under Chronic, each number is how many chronic scripts had that many items. 9+ means 9 or more. Under ARV, 1, 2 and 3 are how many ARV scripts had that many items. Scripts is acute + chronic + ARV. Arrow keys move across the grid. Enter moves down. Numbers save on this device as you type. Overview charts every saved day and can search dates, weekdays, notes, and totals.</p>
   </details>
   <p class="scroll-hint no-print">Swipe sideways for chronic, ARV, scripts and notes.</p>
+  </details>
+  <div class="hours-pane">
+  <details class="fold" id="fold-hours" open>
+    <summary>Hours</summary>
   <div class="table-card">
     <div id="loading" class="loading">Opening saved statistics…</div>
     <div id="empty" class="empty" hidden>
@@ -654,13 +693,29 @@
     <div class="table-wrap">
       <table id="stats" class="stats" hidden></table>
     </div>
+    <form id="add-record" class="add-record no-print">
+      <label class="field">From
+        <input type="time" id="add-start" value="07:00" required>
+      </label>
+      <label class="field">To
+        <input type="time" id="add-end" value="08:00" required>
+      </label>
+      <button type="submit" class="btn primary">Add this record</button>
+    </form>
+  </div>
+  </details>
   </div>
   </div>
   <section id="overview" class="overview" hidden aria-labelledby="overview-title">
     <h2 id="overview-title" class="sr-only">Overview</h2>
+    <details class="fold" id="fold-search" open>
+      <summary>Search and filters</summary>
     <div class="ov-filters no-print">
       <label class="field">Search
-        <input type="search" id="ov-search" placeholder="Date, weekday, note, or total" autocomplete="off">
+        <input type="search" id="ov-search" placeholder="Date, weekday, or total" autocomplete="off">
+      </label>
+      <label class="field">Find a note
+        <input type="search" id="ov-note" placeholder="Words or a time, such as 08:00" autocomplete="off">
       </label>
       <label class="field">From
         <input type="date" id="ov-from">
@@ -674,10 +729,20 @@
         <button type="button" class="btn" data-ov-range="90" aria-pressed="false">90 days</button>
         <button type="button" class="btn is-on" data-ov-range="all" aria-pressed="true" aria-label="All saved days">All</button>
       </div>
+      <div class="ov-filter-actions">
+        <button type="button" class="btn" id="ov-notes-only" aria-pressed="false">Days with notes</button>
+        <button type="button" class="btn" id="ov-clear">Clear search</button>
+      </div>
     </div>
     <p id="ov-range-error" class="help-text ov-note" hidden>From is after To.</p>
+    </details>
+    <details class="fold" id="fold-totals" open>
+      <summary>Totals</summary>
     <p id="ov-blurb" class="ov-blurb"></p>
     <div id="ov-cards" class="ov-cards"></div>
+    </details>
+    <details class="fold" id="fold-charts">
+      <summary>Charts</summary>
     <div class="ov-grid">
       <section class="ov-panel" aria-labelledby="ov-daily-title">
         <h2 id="ov-daily-title">Daily volumes</h2>
@@ -702,8 +767,10 @@
         <div id="ov-chronic"></div>
       </section>
     </div>
+    </details>
+    <details class="fold" id="fold-history" open>
+      <summary>History</summary>
     <div class="ov-history">
-      <h2>History</h2>
       <div class="ov-table-wrap">
         <table id="ov-table" class="ov-table">
           <caption class="sr-only">Saved days matching the search</caption>
@@ -722,6 +789,7 @@
         </table>
       </div>
     </div>
+    </details>
   </section>
   <div id="backup-banner" class="backup-banner" hidden>
     <p id="backup-banner-text">Daily backup ready. A full history file should be in Downloads. If it is not there, tap Save.</p>
@@ -1293,6 +1361,16 @@ function collectOverview(daysMap, filters) {
     var totals = dayTotals(day);
     var noteItems = dayNoteItems(day);
     var notes = dayNoteText(day);
+    var noteQuery = String(filters.note || "").trim().toLowerCase();
+    if (filters.notesOnly && !noteItems.length) return;
+    if (noteQuery) {
+      var noteHit = false;
+      for (var nq = 0; nq < noteItems.length; nq++) {
+        var blob = (noteItems[nq].text + " " + noteItems[nq].start + " " + noteItems[nq].end).toLowerCase();
+        if (blob.indexOf(noteQuery) >= 0) noteHit = true;
+      }
+      if (!noteHit) return;
+    }
     if (q) {
       var parts = day.date.split("-");
       var hay = (weekday(day.date) + " " + parts[2] + "/" + parts[1] + "/" + parts[0] + " " + day.date + " " + notes).toLowerCase();
@@ -1576,8 +1654,11 @@ function compareOverview(a, b, sort) {
 }
 
 function overviewFilters() {
+  var notesBtn = document.getElementById("ov-notes-only");
   return {
     query: document.getElementById("ov-search").value,
+    note: document.getElementById("ov-note").value,
+    notesOnly: !!(notesBtn && notesBtn.getAttribute("aria-pressed") === "true"),
     from: document.getElementById("ov-from").value,
     to: document.getElementById("ov-to").value
   };
@@ -1713,10 +1794,14 @@ function renderOverview() {
     var notesCell = document.createElement("td");
     notesCell.className = "ov-notes";
     var noteItems = item.noteItems || [];
+    var noteQuery = String(filters.note || "").trim().toLowerCase();
     for (var noteIndex = 0; noteIndex < noteItems.length; noteIndex++) {
       var note = noteItems[noteIndex];
+      var blob = (note.text + " " + note.start + " " + note.end).toLowerCase();
+      var matched = !noteQuery || blob.indexOf(noteQuery) >= 0;
+      if (noteQuery && !matched) continue;
       var line = document.createElement("span");
-      line.className = "ov-note-line";
+      line.className = "ov-note-line" + (noteQuery ? " ov-note-hit" : "");
       var when = document.createElement("span");
       when.className = "ov-when";
       when.textContent = note.start + "\u2013" + note.end;
@@ -3129,14 +3214,18 @@ async function copyPrevious() {
     return;
   }
   var current = currentDay();
-  if (current && current.slots.length) {
-    var ok = await ask({
-      title: "Copy previous day?",
-      message: "Replace this day’s entries with the hours and numbers from " + formatDate(prevDate) + "?",
-      buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Copy", danger: true }]
-    });
-    if (ok !== "ok") return;
-  }
+  var replacing = !!(current && current.slots.length);
+  var ok = await ask({
+    title: "Copy previous day?",
+    message: replacing
+      ? "Replace this day’s hours and numbers with " + formatDate(prevDate) + "? The entries on this day will be overwritten."
+      : "Copy the hours and numbers from " + formatDate(prevDate) + " onto this day?",
+    buttons: [
+      { value: "cancel", label: "Keep" },
+      { value: "ok", label: replacing ? "Replace" : "Copy", danger: replacing, primary: !replacing }
+    ]
+  });
+  if (ok !== "ok") return;
   var day = ensureDay();
   var source = state.days.get(prevDate);
   day.slots = source.slots.map(cloneSlot);
@@ -3169,14 +3258,16 @@ async function removeSlot(id) {
   var day = currentDay();
   var slot = day && day.slots.find(function (item) { return item.id === id; });
   if (!slot) return;
-  if (slotHasData(slot)) {
-    var ok = await ask({
-      title: "Remove this hour?",
-      message: "Remove " + slot.start + "\u2013" + slot.end + "? The numbers in this row will be deleted.",
-      buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Remove", danger: true }]
-    });
-    if (ok !== "ok") return;
-  }
+  var message = "Remove " + slot.start + "\u2013" + slot.end + "?";
+  if (slotHasData(slot)) message += " The numbers and note in this row will be deleted.";
+  else message += " This hour will come off the day.";
+  if (day.slots.length === 1) message += " It is the last hour, so this day will be cleared.";
+  var ok = await ask({
+    title: "Remove this hour?",
+    message: message,
+    buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Remove", danger: true }]
+  });
+  if (ok !== "ok") return;
   day.slots = day.slots.filter(function (item) { return item.id !== id; });
   if (!day.slots.length) {
     tombstones.add(day.date);
@@ -3233,15 +3324,17 @@ function onNumInput(input) {
   scheduleSave();
 }
 
-function onTimeChange(input) {
-  var slot = findSlot(input.dataset.slot);
-  if (!slot) return;
-  var value = validTime(input.value || "");
-  if (!value) return;
-  slot[input.dataset.time] = value;
-  var invalid = slot.end <= slot.start;
+function focusSlot(id) {
+  var input = document.querySelector(attrSel("data-slot", id) + '[data-group="patients"]');
+  if (!input) return;
+  input.focus();
+  if (input.scrollIntoView) input.scrollIntoView({ block: "center", inline: "nearest" });
+}
+
+function commitSlotTime(slot, input) {
   var row = input.closest("tr");
   var times = row.querySelectorAll('input[type="time"]');
+  var invalid = slot.end <= slot.start;
   for (var i = 0; i < times.length; i++) times[i].setAttribute("aria-invalid", invalid ? "true" : "false");
   var day = currentDay();
   var before = day.slots.map(function (item) { return item.id; }).join(",");
@@ -3249,6 +3342,99 @@ function onTimeChange(input) {
   var after = day.slots.map(function (item) { return item.id; }).join(",");
   scheduleSave();
   if (before !== after) renderTable();
+}
+
+function onTimeChange(input) {
+  var slot = findSlot(input.dataset.slot);
+  if (!slot) return;
+  var field = input.dataset.time;
+  var previous = slot[field];
+  var value = validTime(input.value || "");
+  if (!value || value === previous) {
+    input.value = previous;
+    return;
+  }
+  var nextStart = field === "start" ? value : slot.start;
+  var nextEnd = field === "end" ? value : slot.end;
+  if (nextEnd <= nextStart) {
+    input.value = previous;
+    toast("The end has to be after the start.");
+    return;
+  }
+  var day = currentDay();
+  var duplicate = day.slots.some(function (item) {
+    return item.id !== slot.id && item.start === nextStart && item.end === nextEnd;
+  });
+  if (duplicate) {
+    input.value = previous;
+    toast(nextStart + "\u2013" + nextEnd + " is already on this day.");
+    return;
+  }
+  function apply() {
+    slot[field] = value;
+    commitSlotTime(slot, input);
+  }
+  if (!slotHasData(slot)) {
+    apply();
+    return;
+  }
+  ask({
+    title: "Change this hour?",
+    message: "Move the numbers and note from " + slot.start + "\u2013" + slot.end + " to " + nextStart + "\u2013" + nextEnd + "?",
+    buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Change", primary: true }]
+  }).then(function (ok) {
+    if (ok !== "ok") {
+      input.value = previous;
+      return;
+    }
+    apply();
+  });
+}
+
+async function addSpecificRecord(startValue, endValue) {
+  var start = validTime(startValue || "");
+  var end = validTime(endValue || "");
+  if (!start || !end || end <= start) {
+    toast("Choose a start time before the end time.");
+    return;
+  }
+  var existing = currentDay();
+  var slots = existing ? existing.slots : [];
+  for (var i = 0; i < slots.length; i++) {
+    if (slots[i].start === start && slots[i].end === end) {
+      var open = await ask({
+        title: "That hour is already here",
+        message: start + "\u2013" + end + " is already on this day. Open that row instead of adding another?",
+        buttons: [{ value: "cancel", label: "Cancel" }, { value: "ok", label: "Open it", primary: true }]
+      });
+      if (open === "ok") focusSlot(slots[i].id);
+      return;
+    }
+  }
+  var overlap = null;
+  for (var s = 0; s < slots.length; s++) {
+    if (start < slots[s].end && end > slots[s].start) overlap = slots[s];
+  }
+  if (overlap) {
+    var allowed = await ask({
+      title: "These times overlap",
+      message: start + "\u2013" + end + " overlaps " + overlap.start + "\u2013" + overlap.end + ". Add it as its own row anyway?",
+      buttons: [{ value: "cancel", label: "Cancel" }, { value: "ok", label: "Add anyway", primary: true }]
+    });
+    if (allowed !== "ok") return;
+  }
+  var day = ensureDay();
+  var slot = blankSlot(start, end);
+  day.slots.push(slot);
+  day.slots.sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : a.end < b.end ? -1 : 1; });
+  scheduleSave();
+  renderAll();
+  var formStart = document.getElementById("add-start");
+  var formEnd = document.getElementById("add-end");
+  if (formStart) formStart.value = end;
+  var following = addMinutes(end, 60);
+  if (formEnd && following) formEnd.value = following;
+  focusSlot(slot.id);
 }
 
 function moveGrid(input, key, shift) {
@@ -3584,7 +3770,42 @@ function showStorageError(err) {
   box.append(text, button);
 }
 
+function rememberFolds() {
+  var folds = document.querySelectorAll("details.fold");
+  for (var i = 0; i < folds.length; i++) {
+    (function (fold) {
+      var key = "montebello-stats-fold-" + fold.id;
+      try {
+        var saved = sessionStorage.getItem(key);
+        if (saved === "closed") fold.open = false;
+        if (saved === "open") fold.open = true;
+      } catch (err) {}
+      fold.addEventListener("toggle", function () {
+        try { sessionStorage.setItem(key, fold.open ? "open" : "closed"); } catch (err) {}
+      });
+    })(folds[i]);
+  }
+}
+
 function bind() {
+  rememberFolds();
+  window.addEventListener("beforeprint", function () {
+    var folds = document.querySelectorAll("details.fold");
+    for (var i = 0; i < folds.length; i++) {
+      folds[i].dataset.wasOpen = folds[i].open ? "1" : "0";
+      folds[i].open = true;
+    }
+  });
+  window.addEventListener("afterprint", function () {
+    var folds = document.querySelectorAll("details.fold");
+    for (var i = 0; i < folds.length; i++) {
+      if (folds[i].dataset.wasOpen === "0") folds[i].open = false;
+    }
+  });
+  document.getElementById("add-record").addEventListener("submit", function (event) {
+    event.preventDefault();
+    addSpecificRecord(document.getElementById("add-start").value, document.getElementById("add-end").value);
+  });
   document.getElementById("top-prev").addEventListener("click", function () { stepDay(-1); });
   document.getElementById("top-next").addEventListener("click", function () { stepDay(1); });
   document.getElementById("today-btn").addEventListener("click", function () { setDate(localISODate(new Date())); });
@@ -3608,6 +3829,24 @@ function bind() {
   document.getElementById("view-sheet").addEventListener("click", function () { showView("sheet"); });
   document.getElementById("view-overview").addEventListener("click", function () { showView("overview"); });
   document.getElementById("ov-search").addEventListener("input", renderOverview);
+  document.getElementById("ov-note").addEventListener("input", renderOverview);
+  document.getElementById("ov-notes-only").addEventListener("click", function () {
+    var btn = document.getElementById("ov-notes-only");
+    var on = btn.getAttribute("aria-pressed") !== "true";
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.classList.toggle("is-on", on);
+    renderOverview();
+  });
+  document.getElementById("ov-clear").addEventListener("click", function () {
+    document.getElementById("ov-search").value = "";
+    document.getElementById("ov-note").value = "";
+    document.getElementById("ov-from").value = "";
+    document.getElementById("ov-to").value = "";
+    var notes = document.getElementById("ov-notes-only");
+    notes.setAttribute("aria-pressed", "false");
+    notes.classList.remove("is-on");
+    renderOverview();
+  });
   document.getElementById("ov-from").addEventListener("change", renderOverview);
   document.getElementById("ov-to").addEventListener("change", renderOverview);
   document.querySelector(".ov-ranges").addEventListener("click", function (event) {
@@ -3991,6 +4230,10 @@ function selfTest() {
       assert(note.rows.length === 1 && note.rows[0].date === "2026-10-30", "note search");
       assert(note.rows[0].noteItems.length === 1 && note.rows[0].noteItems[0].start === "08:00" && note.rows[0].noteItems[0].end === "09:00", "note time");
       assert(note.rows[0].notes.indexOf("08:00") >= 0, "note text keeps the hour");
+      var located = collectOverview(map, { note: "08:00" });
+      assert(located.rows.length === 1 && located.rows[0].date === "2026-10-30", "note time search");
+      var withNotes = collectOverview(map, { notesOnly: true });
+      assert(withNotes.rows.length === 1 && withNotes.rows[0].date === "2026-10-30", "notes only");
       var byTotal = collectOverview(map, { query: "4" });
       assert(byTotal.rows.length === 1 && byTotal.rows[0].date === "2026-10-30", "total search");
       var ranged = collectOverview(map, { from: "2026-10-31", to: "2026-10-31" });
