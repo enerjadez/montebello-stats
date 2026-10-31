@@ -505,7 +505,9 @@
   .ov-table button { min-height: 36px; padding: 6px 0; border: 0; background: transparent; font-weight: 700; }
   .ov-table td button { color: var(--accent); }
   .ov-table tbody tr:hover td { background: var(--now-bg); }
-  .ov-notes { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+  .ov-table td.ov-notes { max-width: 360px; white-space: normal; vertical-align: top; }
+  .ov-note-line { display: block; margin: 4px 0; line-height: 1.35; }
+  .ov-when { margin-right: 6px; color: var(--muted); font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .ov-empty { margin: 0; color: var(--muted); }
   .star-sticker {
     position: absolute;
@@ -1178,13 +1180,21 @@ function dayTotals(day) {
   return { buckets: buckets, groups: groups, scripts: scripts };
 }
 
-function dayNoteText(day) {
-  var parts = [];
+function dayNoteItems(day) {
+  var items = [];
   var slots = day && day.slots ? day.slots : [];
   for (var i = 0; i < slots.length; i++) {
-    if (typeof slots[i].notes === "string" && slots[i].notes.trim()) parts.push(slots[i].notes.trim());
+    var slot = slots[i];
+    if (typeof slot.notes !== "string" || !slot.notes.trim()) continue;
+    items.push({ start: slot.start, end: slot.end, text: slot.notes.trim() });
   }
-  return parts.join(" \u00b7 ");
+  return items;
+}
+
+function dayNoteText(day) {
+  return dayNoteItems(day).map(function (item) {
+    return item.start + "\u2013" + item.end + " " + item.text;
+  }).join(" \u00b7 ");
 }
 
 function hourLabel(start) {
@@ -1229,6 +1239,7 @@ function collectOverview(daysMap, filters) {
     if (from && day.date < from) return;
     if (to && day.date > to) return;
     var totals = dayTotals(day);
+    var noteItems = dayNoteItems(day);
     var notes = dayNoteText(day);
     if (q) {
       var parts = day.date.split("-");
@@ -1271,6 +1282,7 @@ function collectOverview(daysMap, filters) {
       arv: totals.groups.arv,
       scripts: totals.scripts,
       notes: notes,
+      noteItems: noteItems,
       hours: rowHours
     });
     report.sum.patients += totals.groups.patients;
@@ -1642,8 +1654,20 @@ function renderOverview() {
     });
     var notesCell = document.createElement("td");
     notesCell.className = "ov-notes";
-    notesCell.textContent = item.notes;
-    notesCell.title = item.notes;
+    var noteItems = item.noteItems || [];
+    for (var noteIndex = 0; noteIndex < noteItems.length; noteIndex++) {
+      var note = noteItems[noteIndex];
+      var line = document.createElement("span");
+      line.className = "ov-note-line";
+      var when = document.createElement("span");
+      when.className = "ov-when";
+      when.textContent = note.start + "\u2013" + note.end;
+      var text = document.createElement("span");
+      text.textContent = note.text;
+      line.append(when, text);
+      notesCell.appendChild(line);
+    }
+    if (item.notes) notesCell.title = item.notes;
     rowEl.appendChild(notesCell);
     body.appendChild(rowEl);
   }
@@ -3903,6 +3927,8 @@ function selfTest() {
       assert(all.hours.length === 2 && all.hours[0].label === "07:00" && all.hours[1].patients === 3, "hour gaps");
       var note = collectOverview(map, { query: "delivery" });
       assert(note.rows.length === 1 && note.rows[0].date === "2026-10-30", "note search");
+      assert(note.rows[0].noteItems.length === 1 && note.rows[0].noteItems[0].start === "08:00" && note.rows[0].noteItems[0].end === "09:00", "note time");
+      assert(note.rows[0].notes.indexOf("08:00") >= 0, "note text keeps the hour");
       var byTotal = collectOverview(map, { query: "4" });
       assert(byTotal.rows.length === 1 && byTotal.rows[0].date === "2026-10-30", "total search");
       var ranged = collectOverview(map, { from: "2026-10-31", to: "2026-10-31" });
