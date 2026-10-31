@@ -208,7 +208,9 @@
     font-size: 1.7rem;
     line-height: 1;
   }
-  .day-nav #day-line { margin: 0; min-width: 12rem; text-align: center; }
+  .day-nav-label { display: flex; flex-direction: column; align-items: center; min-width: 12rem; }
+  .day-nav #day-line { margin: 0; text-align: center; }
+  .today-hint { margin: 0; color: var(--muted); font-size: 0.75rem; font-weight: 650; line-height: 1.2; }
   .top-actions { display: flex; align-items: center; gap: 8px; }
   .save {
     display: inline-flex;
@@ -576,7 +578,8 @@
     h1 { font-size: 1.05rem; }
     .save { min-height: 32px; font-size: 0.75rem; }
     .day-nav { gap: 6px; padding: 2px 8px 4px; }
-    .day-nav #day-line { min-width: 0; flex: 1; font-size: 0.95rem; }
+    .day-nav-label { min-width: 0; flex: 1; }
+    .day-nav #day-line { font-size: 0.95rem; }
     .view-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 6px; }
     .view-btn { width: 100%; }
     .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 2px 12px 6px; }
@@ -642,7 +645,10 @@
   </header>
   <div class="day-nav" aria-label="Choose a day">
     <button type="button" class="day-arrow no-print" id="top-prev" aria-label="Previous day">‹</button>
-    <p id="day-line"></p>
+    <div class="day-nav-label">
+      <p id="day-line"></p>
+      <p id="today-hint" class="today-hint" hidden>(today)</p>
+    </div>
     <button type="button" class="day-arrow no-print" id="top-next" aria-label="Next day">›</button>
   </div>
   <nav class="view-nav no-print" aria-label="Menus">
@@ -2987,9 +2993,11 @@ function renderChrome() {
   document.getElementById("report-title").textContent = overview
     ? "Overview of saved outpatient statistics"
     : "Hourly outpatient statistics \u2013 prescription and patient volumes";
+  var isToday = state.currentDate === localISODate(new Date());
   document.getElementById("day-line").textContent = weekday(state.currentDate) + " " + formatDate(state.currentDate);
+  document.getElementById("today-hint").hidden = !isToday;
   document.title = overview ? "Montebello Stats \u2014 Overview" : "Montebello Stats \u2014 " + formatDate(state.currentDate);
-  document.getElementById("today-btn").disabled = state.currentDate === localISODate(new Date());
+  document.getElementById("today-btn").disabled = isToday;
   var day = currentDay();
   document.getElementById("clear-numbers").disabled = !(day && day.slots.some(slotHasData));
   var when = state.settings && state.settings.lastBackupAt;
