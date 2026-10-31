@@ -325,12 +325,19 @@
   th.c-notes { background: var(--th-time); }
   th.sub.tone-chronic { background: var(--sub-chronic); color: var(--sub-fg); }
   th.sub.tone-arv { background: var(--sub-arv); color: var(--sub-fg); }
-  .c-time { min-width: 168px; }
+  .c-time { width: 104px; min-width: 104px; max-width: 112px; }
   .c-single { min-width: 84px; }
   .c-split { min-width: 48px; }
   .c-scripts { min-width: 76px; }
   .c-notes { min-width: 130px; }
-  .slot-time { display: flex; align-items: center; justify-content: center; gap: 2px; }
+  .slot-time {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+  }
   .stats input {
     width: 100%;
     min-height: 40px;
@@ -785,8 +792,8 @@
     .table-card { margin: 0; }
     details.fold > summary { padding-left: 12px; padding-right: 12px; }
     .table-wrap { -webkit-overflow-scrolling: touch; }
-    .c-time { min-width: 92px; }
-    .slot-time { flex-direction: column; gap: 0; }
+    .c-time { width: 96px; min-width: 96px; max-width: 104px; }
+    .slot-time { font-size: 0.72rem; }
     .c-single { min-width: 68px; }
     .c-split { min-width: 42px; }
     .c-notes { min-width: 120px; }
@@ -1024,12 +1031,12 @@
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
-    .stats thead tr:first-child th:first-child { width: 15%; }
+    .stats thead tr:first-child th:first-child { width: 11%; }
     .stats thead tr:first-child th.c-single { width: 6.5%; }
     .stats thead tr:first-child th.tone-chronic { width: 36%; }
     .stats thead tr:first-child th.tone-arv { width: 12%; }
     .stats thead tr:first-child th.c-scripts { width: 6.5%; }
-    .stats thead tr:first-child th.c-notes { width: 17.5%; }
+    .stats thead tr:first-child th.c-notes { width: 21.5%; }
     .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; }
     #stats input, .time-dash { display: none !important; }
     .print-time, .print-val { display: inline; font-size: 10pt; font-variant-numeric: tabular-nums; }
@@ -3499,19 +3506,6 @@ function numInput(slot, group, key) {
   return input;
 }
 
-function timeInput(slot, which) {
-  var input = document.createElement("input");
-  input.type = "time";
-  input.step = "60";
-  input.value = slot[which];
-  input.dataset.grid = "1";
-  input.dataset.slot = slot.id;
-  input.dataset.time = which;
-  input.setAttribute("aria-label", (which === "start" ? "Start time " : "End time ") + slot.start + " to " + slot.end);
-  if (slot.end <= slot.start) input.setAttribute("aria-invalid", "true");
-  return input;
-}
-
 function renderTable() {
   var day = currentDay();
   var empty = document.getElementById("empty");
@@ -3529,14 +3523,14 @@ function renderTable() {
   table.hidden = false;
   var leaves = leafColumns();
   var hasSplit = COLUMN_GROUPS.some(function (group) { return group.type === "split"; });
-  table.dataset.cols = String(2 + leaves.length + 1);
+  table.dataset.cols = String(leaves.length + 1);
   var caption = document.createElement("caption");
   caption.className = "sr-only";
   caption.textContent = "Hourly outpatient statistics for " + formatDate(day.date);
   var thead = document.createElement("thead");
   var hr1 = document.createElement("tr");
   var hr2 = document.createElement("tr");
-  hr1.appendChild(headerCell("Time", { className: "sticky-col tone-time", scope: "col", rowSpan: hasSplit ? 2 : 1 }));
+  hr1.appendChild(headerCell("Time", { className: "sticky-col tone-time c-time", scope: "col", rowSpan: hasSplit ? 2 : 1 }));
   for (var g = 0; g < COLUMN_GROUPS.length; g++) {
     var group = COLUMN_GROUPS[g];
     if (group.type === "single") {
@@ -3585,13 +3579,9 @@ function renderRow(slot, nowId) {
   if (slot.id === nowId) tr.classList.add("is-now");
   var time = document.createElement("td");
   time.className = "sticky-col c-time";
-  var wrap = document.createElement("div");
+  var wrap = document.createElement("span");
   wrap.className = "slot-time";
-  var dash = document.createElement("span");
-  dash.className = "time-dash";
-  dash.setAttribute("aria-hidden", "true");
-  dash.textContent = "\u2013";
-  wrap.append(timeInput(slot, "start"), dash, timeInput(slot, "end"));
+  wrap.textContent = slot.start + "\u2013" + slot.end;
   time.appendChild(wrap);
   tr.appendChild(time);
   var leaves = leafColumns();
@@ -4041,66 +4031,6 @@ function focusSlot(id) {
   if (!input) return;
   input.focus();
   if (input.scrollIntoView) input.scrollIntoView({ block: "center", inline: "nearest" });
-}
-
-function commitSlotTime(slot, input) {
-  var row = input.closest("tr");
-  var times = row.querySelectorAll('input[type="time"]');
-  var invalid = slot.end <= slot.start;
-  for (var i = 0; i < times.length; i++) times[i].setAttribute("aria-invalid", invalid ? "true" : "false");
-  var day = currentDay();
-  var before = day.slots.map(function (item) { return item.id; }).join(",");
-  day.slots.sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : a.end < b.end ? -1 : 1; });
-  var after = day.slots.map(function (item) { return item.id; }).join(",");
-  scheduleSave();
-  if (before !== after) renderTable();
-}
-
-function onTimeChange(input) {
-  var slot = findSlot(input.dataset.slot);
-  if (!slot) return;
-  var field = input.dataset.time;
-  var previous = slot[field];
-  var value = validTime(input.value || "");
-  if (!value || value === previous) {
-    input.value = previous;
-    return;
-  }
-  var nextStart = field === "start" ? value : slot.start;
-  var nextEnd = field === "end" ? value : slot.end;
-  if (nextEnd <= nextStart) {
-    input.value = previous;
-    toast("The end has to be after the start.");
-    return;
-  }
-  var day = currentDay();
-  var duplicate = day.slots.some(function (item) {
-    return item.id !== slot.id && item.start === nextStart && item.end === nextEnd;
-  });
-  if (duplicate) {
-    input.value = previous;
-    toast(nextStart + "\u2013" + nextEnd + " is already on this day.");
-    return;
-  }
-  function apply() {
-    slot[field] = value;
-    commitSlotTime(slot, input);
-  }
-  if (!slotHasData(slot)) {
-    apply();
-    return;
-  }
-  ask({
-    title: "Change this hour?",
-    message: "Move the numbers and note from " + slot.start + "\u2013" + slot.end + " to " + nextStart + "\u2013" + nextEnd + "?",
-    buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Change", primary: true }]
-  }).then(function (ok) {
-    if (ok !== "ok") {
-      input.value = previous;
-      return;
-    }
-    apply();
-  });
 }
 
 function preferredQuickSlot(day) {
@@ -4748,19 +4678,6 @@ function rememberFolds() {
 }
 
 function fillPrintValues() {
-  var times = document.querySelectorAll("#stats .slot-time");
-  for (var t = 0; t < times.length; t++) {
-    var clocks = times[t].querySelectorAll("input");
-    if (clocks.length < 2) continue;
-    var when = times[t].querySelector(".print-time");
-    if (!when) {
-      when = document.createElement("span");
-      when.className = "print-time";
-      when.setAttribute("aria-hidden", "true");
-      times[t].appendChild(when);
-    }
-    when.textContent = clocks[0].value + "\u2013" + clocks[1].value;
-  }
   var inputs = document.querySelectorAll("#stats input.num, #stats input.notes");
   for (var i = 0; i < inputs.length; i++) {
     var input = inputs[i];
@@ -5044,9 +4961,6 @@ function bind() {
       document.getElementById("clear-numbers").disabled = !currentDay().slots.some(slotHasData);
       scheduleSave();
     }
-  });
-  document.getElementById("stats").addEventListener("change", function (event) {
-    if (event.target.type === "time") onTimeChange(event.target);
   });
   document.getElementById("stats").addEventListener("keydown", function (event) {
     var el = eventEl(event);
