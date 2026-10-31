@@ -190,7 +190,25 @@
   h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.02em; }
   #report-title, #day-line { margin: 2px 0 0; }
   #report-title { color: var(--muted); font-size: 0.92rem; }
-  #day-line { font-weight: 650; }
+  #day-line { font-weight: 700; }
+  .day-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 16px 8px;
+  }
+  .day-arrow {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+  .day-nav #day-line { margin: 0; min-width: 12rem; text-align: center; }
   .top-actions { display: flex; align-items: center; gap: 8px; }
   .save {
     display: inline-flex;
@@ -469,7 +487,9 @@
   .sw-patients { background: #5f8f8a; }
   .sw-scripts { background: var(--accent); }
   .chart-scroll { overflow-x: auto; }
+  #ov-daily { height: 190px; overflow: hidden; }
   .chart { display: block; width: 100%; height: auto; }
+  #ov-daily .chart { width: 100%; height: 100%; }
   .chart text { fill: var(--muted); font-size: 11px; font-family: "Segoe UI", system-ui, sans-serif; }
   .chart .grid { stroke: var(--line); stroke-width: 1; }
   .bar-patients { fill: #5f8f8a; }
@@ -529,13 +549,17 @@
       <p class="eyebrow">Montebello Hospital · Pharmacy</p>
       <h1>Montebello Stats</h1>
       <p id="report-title">Hourly outpatient statistics – prescription and patient volumes</p>
-      <p id="day-line"></p>
     </div>
     <div class="top-actions no-print">
       <p id="save-status" class="save" role="status"><span class="dot" aria-hidden="true"></span><span id="save-text">Saved</span></p>
       <button type="button" class="btn" id="open-settings">Settings</button>
     </div>
   </header>
+  <div class="day-nav" aria-label="Choose a day">
+    <button type="button" class="day-arrow no-print" id="top-prev" aria-label="Previous day">‹</button>
+    <p id="day-line"></p>
+    <button type="button" class="day-arrow no-print" id="top-next" aria-label="Next day">›</button>
+  </div>
   <nav class="view-nav no-print" aria-label="Menus">
     <button type="button" class="btn view-btn" id="view-sheet" aria-pressed="true">Sheet</button>
     <button type="button" class="btn view-btn" id="view-overview" aria-pressed="false">Overview</button>
@@ -1360,14 +1384,16 @@ function dailyChart(rows) {
   var aria = rows.length
     ? "Daily patients and scripts for " + rows.length + " day" + (rows.length === 1 ? "" : "s") + ". Highest scripts " + peak.scripts + " on " + formatDate(peak.date) + "."
     : "No daily volumes in this search.";
-  var slotW = 42;
   var padL = 36;
-  var padB = 28;
+  var padR = 8;
+  var padB = 26;
   var padT = 8;
-  var plotH = 120;
-  var plotW = Math.max(rows.length, 1) * slotW;
-  var width = padL + plotW + 8;
+  var plotH = 112;
+  var plotW = 560;
+  var width = padL + plotW + padR;
   var height = padT + plotH + padB;
+  var count = Math.max(rows.length, 1);
+  var slotW = plotW / count;
   var max = 1;
   for (var i = 0; i < rows.length; i++) {
     if (rows[i].patients > max) max = rows[i].patients;
@@ -1375,10 +1401,9 @@ function dailyChart(rows) {
   }
   max = niceCeil(max);
   var svg = svgNode("svg", {
-    class: "chart",
-    width: String(width),
-    height: String(height),
+    class: "chart chart-daily",
     viewBox: "0 0 " + width + " " + height,
+    preserveAspectRatio: "xMidYMid meet",
     role: "img",
     "aria-label": aria
   });
@@ -1400,19 +1425,23 @@ function dailyChart(rows) {
     tickLabel.textContent = String(Math.round(tick));
     svg.appendChild(tickLabel);
   }
-  var step = rows.length > 16 ? Math.ceil(rows.length / 12) : 1;
+  var step = slotW < 32 ? Math.ceil(32 / slotW) : 1;
+  var barW = Math.min(16, Math.max(2, (slotW - 4) / 2.3));
+  var barGap = Math.min(4, Math.max(1, slotW * 0.06));
   for (var n = 0; n < rows.length; n++) {
     var row = rows[n];
     var x = padL + n * slotW;
-    var series = [{ offset: 6, value: row.patients, cls: "bar-patients" }, { offset: 20, value: row.scripts, cls: "bar-scripts" }];
+    var pair = barW * 2 + barGap;
+    var left = x + Math.max(0, (slotW - pair) / 2);
+    var series = [{ offset: 0, value: row.patients, cls: "bar-patients" }, { offset: barW + barGap, value: row.scripts, cls: "bar-scripts" }];
     for (var s = 0; s < series.length; s++) {
       var piece = series[s];
       var h = piece.value <= 0 ? 0 : Math.max(2, Math.round((piece.value / max) * plotH));
       var rect = svgNode("rect", {
         class: piece.cls,
-        x: String(x + piece.offset),
+        x: String(left + piece.offset),
         y: String(padT + plotH - h),
-        width: "12",
+        width: String(Math.round(barW * 10) / 10),
         height: String(h),
         rx: "2"
       });
@@ -1519,7 +1548,6 @@ function renderOverview() {
       + " · " + formatDate(first.date) + " to " + formatDate(last.date)
       + (busy ? " · busiest " + busy.label + ", " + busy.scripts + " scripts" : "");
   }
-  document.getElementById("day-line").textContent = blurb.textContent;
   var cards = document.getElementById("ov-cards");
   cards.replaceChildren(
     overviewCard("Days", String(report.sum.days), report.rows.length ? report.rows.length + " with hours" : ""),
@@ -2792,7 +2820,7 @@ function renderChrome() {
   document.getElementById("report-title").textContent = overview
     ? "Overview of saved outpatient statistics"
     : "Hourly outpatient statistics \u2013 prescription and patient volumes";
-  if (!overview) document.getElementById("day-line").textContent = weekday(state.currentDate) + " " + formatDate(state.currentDate);
+  document.getElementById("day-line").textContent = weekday(state.currentDate) + " " + formatDate(state.currentDate);
   document.title = overview ? "Montebello Stats \u2014 Overview" : "Montebello Stats \u2014 " + formatDate(state.currentDate);
   document.getElementById("today-btn").disabled = state.currentDate === localISODate(new Date());
   var day = currentDay();
@@ -2934,6 +2962,19 @@ function initialDate() {
     if (saved && /^\d{4}-\d{2}-\d{2}$/.test(saved)) return saved;
   } catch (err) {}
   return localISODate(new Date());
+}
+
+function stepDay(delta) {
+  var next = shiftDate(state.currentDate, delta);
+  if (state.view === "overview") {
+    var from = document.getElementById("ov-from");
+    var to = document.getElementById("ov-to");
+    if (from && to) {
+      from.value = next;
+      to.value = next;
+    }
+  }
+  setDate(next);
 }
 
 async function setDate(iso) {
@@ -3462,8 +3503,10 @@ function showStorageError(err) {
 }
 
 function bind() {
-  document.getElementById("prev-day").addEventListener("click", function () { setDate(shiftDate(state.currentDate, -1)); });
-  document.getElementById("next-day").addEventListener("click", function () { setDate(shiftDate(state.currentDate, 1)); });
+  document.getElementById("top-prev").addEventListener("click", function () { stepDay(-1); });
+  document.getElementById("top-next").addEventListener("click", function () { stepDay(1); });
+  document.getElementById("prev-day").addEventListener("click", function () { stepDay(-1); });
+  document.getElementById("next-day").addEventListener("click", function () { stepDay(1); });
   document.getElementById("today-btn").addEventListener("click", function () { setDate(localISODate(new Date())); });
   document.getElementById("now-btn").addEventListener("click", function () { jumpToNow(); });
   document.getElementById("work-date").addEventListener("change", function (event) {
