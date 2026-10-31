@@ -19,7 +19,16 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html { height: 100%; }
+  /* The viewport is the only vertical scroller. clip does not make html a
+     second sideways scroller, and body stays overflow visible so sticky bars
+     stick to the page instead of a nested box. */
+  html {
+    min-height: 100dvh;
+    height: auto;
+    overflow-x: clip;
+    overflow-y: auto;
+    background: var(--bg);
+  }
   :root {
     --bg: #e7efed;
     --surface: #ffffff;
@@ -123,8 +132,9 @@
   }
   body {
     margin: 0;
-    min-height: 100%;
-    height: 100dvh;
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
     font-family: "Segoe UI", system-ui, sans-serif;
     color: var(--ink);
     background: var(--bg);
@@ -165,11 +175,11 @@
     border: 0;
   }
   .app {
-    height: 100dvh;
+    min-height: 100dvh;
+    height: auto;
     max-width: 1680px;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
+    display: block;
     padding-bottom: env(safe-area-inset-bottom);
   }
   .top {
@@ -277,23 +287,18 @@
   .storage-error { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); }
   .backup-banner p, .storage-error p { margin: 0; flex: 1; font-size: 0.9rem; }
   .table-card {
-    margin: 0 16px 10px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
   .loading, .empty { padding: 28px 16px; color: var(--muted); }
   .empty { margin: auto; text-align: center; max-width: 440px; color: var(--ink); }
   .empty h2 { margin: 0 0 8px; font-size: 1.15rem; }
   .empty p { margin: 0; color: var(--muted); }
   .empty .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
-  .table-wrap { flex: 1; min-height: 0; overflow: auto; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .stats { border-collapse: separate; border-spacing: 0; min-width: max-content; width: 100%; font-variant-numeric: tabular-nums; }
   .stats th, .stats td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 2px; text-align: center; }
   .stats th { font-size: 0.75rem; font-weight: 700; padding: 6px 4px; line-height: 1.2; }
@@ -468,7 +473,16 @@
   #confirm p { margin: 8px 0 16px; color: var(--muted); line-height: 1.45; }
   .view-nav { display: flex; gap: 8px; padding: 0 16px 8px; }
   .view-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
-  .sheet { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .sheet { display: block; }
+  details.fold {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    margin: 10px 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  #fold-hours { overflow: visible; }
   details.fold > summary {
     display: flex;
     align-items: center;
@@ -482,20 +496,29 @@
   details.fold > summary::-webkit-details-marker { display: none; }
   details.fold > summary::before { content: "\25B8"; width: 1.1em; color: var(--accent); }
   details.fold[open] > summary::before { content: "\25BE"; }
-  .hours-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  #fold-hours[open] { flex: 1; min-height: 0; overflow: auto; }
-  #fold-hours:not([open]) { flex: 0 0 auto; }
-  #fold-hours[open] .table-card { min-height: calc(100% - 72px); }
+  .hours-pane { display: block; }
+  .table-full {
+    display: block;
+    width: fit-content;
+    margin: 8px 10px 6px auto;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
   .quick-entry {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px 12px 12px;
-    border-top: 1px solid var(--line);
-    background: var(--surface);
+    padding: 2px 16px 16px;
+    border: 0;
+    background: transparent;
   }
-  .quick-title { margin: 0; font-size: 0.95rem; font-weight: 750; }
-  .quick-hint { margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .quick-title { margin: 0; font-size: 1.02rem; font-weight: 750; letter-spacing: -0.01em; }
+  .quick-hint { margin: 0; color: var(--muted); font-size: 0.8rem; line-height: 1.35; }
   .quick-entry .field { margin: 0; }
   .quick-entry select, .quick-entry input { width: 100%; font-size: 16px; }
   .quick-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -519,10 +542,94 @@
     font-variant-numeric: tabular-nums;
   }
   .quick-entry button[type="submit"] { width: 100%; }
+  .settings-btn {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+  }
+  .settings-btn:hover { color: var(--accent); }
+  .fab {
+    position: fixed;
+    z-index: 50;
+    right: calc(16px + env(safe-area-inset-right));
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 2rem;
+    line-height: 1;
+    box-shadow: var(--shadow);
+  }
+  body[data-view="overview"] .fab { display: none; }
+  .quick-layer { position: fixed; inset: 0; z-index: 60; }
+  .quick-backdrop { position: absolute; inset: 0; border: 0; background: color-mix(in srgb, #000 40%, transparent); }
+  .quick-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: min(86dvh, 680px);
+    overflow: auto;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+    box-shadow: var(--shadow);
+  }
+  .quick-handle { width: 36px; height: 4px; margin: 4px auto 8px; border-radius: 4px; background: var(--line); }
+  .quick-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .day-extra { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px; }
+  @media (min-width: 721px) {
+    .quick-backdrop { background: transparent; }
+    .quick-handle { display: none; }
+    .quick-panel {
+      left: auto;
+      width: min(420px, calc(100vw - 32px));
+      right: calc(16px + env(safe-area-inset-right));
+      bottom: calc(84px + env(safe-area-inset-bottom));
+      max-height: min(80dvh, 720px);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding-bottom: 16px;
+    }
+  }
   .print-time, .print-val { display: none; }
   .ov-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .ov-note-hit { border-radius: 6px; background: color-mix(in srgb, var(--accent) 18%, transparent); }
-  .overview { flex: 1; min-height: 0; overflow: auto; padding-bottom: 8px; }
+  .overview { overflow: visible; padding-bottom: 24px; max-width: 100%; }
+  #overview details.fold, .ov-history { overflow: visible; max-height: none; max-width: 100%; }
+  .ov-cats {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: clip;
+    overscroll-behavior-x: contain;
+    padding: 8px 12px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+  }
+  .ov-cat {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .ov-cat.is-on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .ov-table th.is-cat, .ov-table td.is-cat { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
   .ov-filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; padding: 4px 16px 0; }
   .ov-filters .field { margin: 0; min-width: 150px; }
   .ov-filters input[type="search"] { min-width: 220px; }
@@ -546,8 +653,8 @@
   .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
   .sw-patients { background: #5f8f8a; }
   .sw-scripts { background: var(--accent); }
-  .chart-scroll { overflow-x: auto; }
-  #ov-daily { height: 190px; overflow: hidden; }
+  .chart-scroll { overflow-x: auto; overflow-y: clip; }
+  #ov-daily { height: 190px; overflow: clip; }
   .chart { display: block; width: 100%; height: auto; }
   #ov-daily .chart { width: 100%; height: 100%; }
   .chart text { fill: var(--muted); font-size: 11px; font-family: "Segoe UI", system-ui, sans-serif; }
@@ -558,10 +665,19 @@
   .bar-chronic { fill: #3d74b8; }
   .bar-arv { fill: #c4923a; }
   .bar-track { fill: var(--line); }
-  .ov-table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: auto; max-height: 420px; }
+  .ov-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    max-width: 100%;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: clip;
+    overscroll-behavior-x: contain;
+  }
   .ov-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
   .ov-table th, .ov-table td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
-  .ov-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+  .ov-table th { background: var(--surface); }
   .ov-table button { min-height: 36px; padding: 6px 0; border: 0; background: transparent; font-weight: 700; }
   .ov-table td button { color: var(--accent); }
   .ov-table tbody tr:hover td { background: var(--now-bg); }
@@ -594,10 +710,55 @@
   fieldset { border: 1px solid var(--line); border-radius: 12px; margin: 0 0 12px; }
   legend { padding: 0 6px; font-size: 0.85rem; }
   .stack-label { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+  body.is-full .top,
+  body.is-full .day-nav,
+  body.is-full .view-nav,
+  body.is-full #fold-tools,
+  body.is-full #fold-hours > summary,
+  body.is-full .status-bar { display: none; }
+  html:has(body.is-full) { overflow: hidden; height: 100dvh; }
+  body.is-full { overflow: hidden; height: 100dvh; }
+  body.is-full .table-card {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 30;
+    height: 100dvh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    padding-top: calc(48px + env(safe-area-inset-top));
+    overflow: hidden;
+  }
+  body.is-full .table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  body.is-full .table-full {
+    position: fixed;
+    top: calc(8px + env(safe-area-inset-top));
+    right: calc(8px + env(safe-area-inset-right));
+    margin: 0;
+    z-index: 40;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: transparent;
+  }
   @media (max-width: 720px) {
     .scroll-hint { display: block; margin: 0 12px 4px; }
     .theme-choices, .row-2 { grid-template-columns: 1fr 1fr; }
-    .app { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+    .app {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    }
     .top { align-items: center; padding: 10px 12px 2px; }
     .eyebrow, #report-title { display: none; }
     h1 { font-size: 1.05rem; }
@@ -605,7 +766,8 @@
     .day-nav { gap: 6px; padding: 2px 8px 4px; }
     .day-nav-label { min-width: 0; flex: 1; }
     .day-nav #day-line { font-size: 0.95rem; }
-    .view-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 6px; }
+    .view-nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 12px 6px; }
+    .view-btn { padding: 0 6px; font-size: 0.85rem; }
     .view-btn { width: 100%; }
     .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 2px 12px 6px; }
     .date-field, .date-field input { width: 100%; min-width: 0; }
@@ -615,7 +777,8 @@
     .chip { flex: 0 0 auto; }
     .sheet-more { margin-left: 12px; margin-right: 12px; }
     .help { display: none; }
-    .table-card { margin: 0 8px 8px; }
+    details.fold { margin: 8px; }
+    .table-card { margin: 0; }
     details.fold > summary { padding-left: 12px; padding-right: 12px; }
     .table-wrap { -webkit-overflow-scrolling: touch; }
     .c-time { min-width: 92px; }
@@ -624,6 +787,7 @@
     .c-split { min-width: 42px; }
     .c-notes { min-width: 120px; }
     .status-bar { padding: 0 12px 8px; }
+    .ov-cats { padding: 8px; }
     .ov-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 12px 0; }
     .ov-filters .field, .ov-filters input { width: 100%; min-width: 0; }
     .ov-filters .field:nth-child(-n + 2), .ov-ranges, .ov-filter-actions { grid-column: 1 / -1; }
@@ -635,8 +799,154 @@
     .ov-grid, .ov-history { padding-left: 12px; padding-right: 12px; }
     .ov-grid { grid-template-columns: 1fr; }
     #ov-daily { height: 160px; }
-    .ov-table-wrap { max-height: none; }
+    .ov-table-wrap { max-height: none; overflow-x: auto; overflow-y: clip; }
+    body[data-view="overview"] .app { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
     .ov-blurb { margin-left: 12px; margin-right: 12px; }
+  }
+  @media (min-width: 721px) and (max-width: 1199px) {
+    .app {
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+    }
+    .top { padding: 16px 20px 8px; }
+    .day-nav { padding: 4px 20px 10px; }
+    .view-nav { padding: 0 20px 10px; }
+    details.fold { margin: 12px 16px; }
+    details.fold > summary { padding: 10px 18px; }
+    .toolbar { flex-direction: row; flex-wrap: wrap; padding: 8px 16px; }
+    .summary { flex-wrap: wrap; overflow: visible; padding: 8px 16px 10px; }
+  }
+  @media (min-width: 1200px) {
+    /* Wide layout: no inner scroller, so the header sticks to the viewport.
+       Second row top matches the first row's 52px border-box height.
+       Narrow and full screen keep the scrolling wrap and the same offsets. */
+    body:not(.is-full) .table-wrap { overflow: visible; }
+    body:not(.is-full) .stats tfoot th,
+    body:not(.is-full) .stats tfoot td { position: static; }
+  }
+  .tablet-glance {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 12px 8px;
+    padding: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+  .tablet-stats {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: clip;
+    overscroll-behavior-x: contain;
+  }
+  .tablet-stat {
+    flex: 1 0 76px;
+    min-width: 76px;
+    padding: 6px 8px 8px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  }
+  .tablet-stat span { display: block; color: var(--muted); font-size: 0.72rem; font-weight: 700; }
+  .tablet-stat strong { display: block; margin-top: 2px; color: var(--ink); font-size: 1.28rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .tablet-insight { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.35; }
+  html:has(body.is-tablet),
+  body.is-tablet { height: 100dvh; overflow: hidden; }
+  body.is-tablet .app {
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+  body.is-tablet .eyebrow,
+  body.is-tablet #report-title,
+  body.is-tablet .help,
+  body.is-tablet .scroll-hint,
+  body.is-tablet .status-bar,
+  body.is-tablet #summary,
+  body.is-tablet #fold-tools > summary,
+  body.is-tablet #fold-hours > summary,
+  body.is-tablet .table-full { display: none; }
+  body.is-tablet .top { align-items: center; padding: 8px 16px 2px; }
+  body.is-tablet h1 { font-size: 1.05rem; }
+  body.is-tablet .day-nav { padding-bottom: 4px; }
+  body.is-tablet .view-nav { padding-bottom: 6px; }
+  body.is-tablet .sheet {
+    flex: 1 1 0;
+    height: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  body.is-tablet #fold-tools {
+    flex: 0 0 auto;
+    margin: 0 12px 8px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  body.is-tablet .toolbar,
+  body.is-tablet .day-extra {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: clip;
+    gap: 8px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.is-tablet .sheet-actions { display: flex; flex-wrap: nowrap; }
+  body.is-tablet .btn,
+  body.is-tablet .day-arrow,
+  body.is-tablet .view-btn { min-height: 44px; }
+  body.is-tablet .hours-pane {
+    flex: 1 1 0;
+    height: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  body.is-tablet #fold-hours {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  body.is-tablet .table-card {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: var(--tablet-table-top, 240px);
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+  body.is-tablet .table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding-bottom: 72px;
+  }
+  body.is-tablet .table-wrap:has(#stats[hidden]) { display: none; }
+  body.is-tablet #empty:not([hidden]) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -659,6 +969,18 @@
     #report-title { display: block !important; font-size: 9pt; margin: 0; }
     .day-nav { padding: 0 0 6px; }
     #day-line { font-size: 12pt; }
+    body.is-full .top { display: flex !important; }
+    body.is-full .day-nav { display: flex !important; }
+    body.is-full #day-line { display: block !important; }
+    body.is-full #fold-tools { display: none !important; }
+    details.fold, #fold-hours {
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      overflow: visible !important;
+    }
     #sheet, .hours-pane, #fold-hours, #fold-hours[open], .table-card, .table-wrap {
       display: block !important;
       height: auto !important;
@@ -668,11 +990,18 @@
       flex: none !important;
     }
     .table-card {
+      position: static !important;
+      inset: auto !important;
+      z-index: auto !important;
+      width: auto !important;
+      height: auto !important;
       margin: 0;
+      padding: 0 !important;
       border: none;
       border-radius: 0;
       box-shadow: none;
       background: transparent;
+      display: block !important;
     }
     .stats {
       min-width: 0 !important;
@@ -702,6 +1031,20 @@
     .print-time, .print-val { display: inline; font-size: 10pt; font-variant-numeric: tabular-nums; }
     .c-notes .print-val { display: block; text-align: left; white-space: normal; word-break: break-word; }
     .stats tr, .stats thead { break-inside: avoid; page-break-inside: avoid; }
+    body.is-tablet .app,
+    body.is-tablet .sheet,
+    body.is-tablet .hours-pane,
+    body.is-tablet #fold-hours,
+    body.is-tablet .table-card,
+    body.is-tablet .table-wrap {
+      position: static !important;
+      inset: auto !important;
+      display: block !important;
+      height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+    body.is-tablet .table-card { border: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
     @page { size: A4 landscape; margin: 8mm; }
   }
 </style>
@@ -717,7 +1060,7 @@
     </div>
     <div class="top-actions no-print">
       <p id="save-status" class="save" role="status"><span class="dot" aria-hidden="true"></span><span id="save-text">Saved</span></p>
-      <button type="button" class="btn" id="open-settings">Settings</button>
+      <button type="button" class="btn settings-btn" id="open-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13.5a7.8 7.8 0 0 0 .1-1.5 7.8 7.8 0 0 0-.1-1.5l2-1.6a.5.5 0 0 0 .1-.6l-1.9-3.3a.5.5 0 0 0-.6-.2l-2.4 1a7.3 7.3 0 0 0-2.6-1.5l-.4-2.5a.5.5 0 0 0-.5-.4h-3.8a.5.5 0 0 0-.5.4l-.4 2.5a7.3 7.3 0 0 0-2.6 1.5l-2.4-1a.5.5 0 0 0-.6.2L.6 8.3a.5.5 0 0 0 .1.6l2 1.6a7.8 7.8 0 0 0-.1 1.5 7.8 7.8 0 0 0 .1 1.5l-2 1.6a.5.5 0 0 0-.1.6l1.9 3.3a.5.5 0 0 0 .6.2l2.4-1a7.3 7.3 0 0 0 2.6 1.5l.4 2.5a.5.5 0 0 0 .5.4h3.8a.5.5 0 0 0 .5-.4l.4-2.5a7.3 7.3 0 0 0 2.6-1.5l2.4 1a.5.5 0 0 0 .6-.2l1.9-3.3a.5.5 0 0 0-.1-.6l-2-1.6zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></button>
     </div>
   </header>
   <div class="day-nav" aria-label="Choose a day">
@@ -731,9 +1074,14 @@
   <nav class="view-nav no-print" aria-label="Menus">
     <button type="button" class="btn view-btn" id="view-sheet" aria-pressed="true">Sheet</button>
     <button type="button" class="btn view-btn" id="view-overview" aria-pressed="false">Overview</button>
+    <button type="button" class="btn view-btn" id="tablet-mode" aria-pressed="false">Tablet</button>
   </nav>
   <div id="storage-error" class="storage-error" hidden></div>
   <div id="sheet" class="sheet">
+  <div id="tablet-glance" class="tablet-glance no-print" hidden>
+    <div id="tablet-stats" class="tablet-stats" aria-label="This day"></div>
+    <p id="tablet-insight" class="tablet-insight"></p>
+  </div>
   <details class="fold" id="fold-tools" open>
     <summary>Day tools</summary>
   <div class="toolbar no-print">
@@ -746,17 +1094,14 @@
     </div>
   </div>
   <div class="summary" id="summary" aria-live="polite" aria-label="Day totals"></div>
-  <details class="sheet-more no-print">
-    <summary>More for this day</summary>
-    <div class="sheet-more-actions">
-      <button type="button" class="btn" id="add-hour">Add hour</button>
-      <button type="button" class="btn" id="now-btn">This hour</button>
-      <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
-    </div>
-  </details>
+  <div class="day-extra no-print">
+    <button type="button" class="btn" id="add-hour">Add hour</button>
+    <button type="button" class="btn" id="now-btn">This hour</button>
+    <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
+  </div>
   <details class="help no-print">
     <summary>How to record</summary>
-    <p>Each row is one hour. Patients is the number of people. Acute is the number of acute scripts. Under Chronic, each number is how many chronic scripts had that many items. 9+ means 9 or more. Under ARV, 1, 2 and 3 are how many ARV scripts had that many items. Scripts is acute + chronic + ARV. Arrow keys move across the grid. Enter moves down. Numbers save on this device as you type. Under the table, pick the hour and type the counts, then save. The next hour opens. Overview charts every saved day and can search dates, weekdays, notes, and totals.</p>
+    <p>Each row is one hour. Type the counts in the grid, or tap + and save the hour. Scripts is acute + chronic + ARV. 9+ means 9 or more items.</p>
   </details>
   <p class="scroll-hint no-print">Swipe sideways for chronic, ARV, scripts and notes.</p>
   </details>
@@ -773,42 +1118,24 @@
         <button type="button" class="btn" id="empty-copy">Copy previous day</button>
       </div>
     </div>
+    <button type="button" class="table-full no-print" id="table-full" aria-pressed="false" aria-label="Full screen table">Full screen</button>
     <div class="table-wrap">
       <table id="stats" class="stats" hidden></table>
     </div>
-    <form id="add-record" class="quick-entry no-print">
-      <p class="quick-title">Add numbers</p>
-      <p class="quick-hint">Pick the hour, type the counts, then save. The next hour opens.</p>
-      <label class="field">Hour
-        <select id="quick-hour" aria-label="Hour"></select>
-      </label>
-      <div class="quick-pair">
-        <label class="field">Patients
-          <input id="quick-patients" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="patients" aria-label="Patients">
-        </label>
-        <label class="field">Acute
-          <input id="quick-acute" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="acute" aria-label="Acute scripts">
-        </label>
-      </div>
-      <fieldset class="quick-set">
-        <legend>Chronic items</legend>
-        <div class="quick-keys" id="quick-chronic"></div>
-      </fieldset>
-      <fieldset class="quick-set">
-        <legend>ARV items</legend>
-        <div class="quick-keys" id="quick-arv"></div>
-      </fieldset>
-      <label class="field">Note
-        <input type="text" id="quick-note" maxlength="500" autocomplete="off" aria-label="Note">
-      </label>
-      <button type="submit" class="btn primary">Save this hour</button>
-    </form>
   </div>
   </details>
   </div>
   </div>
   <section id="overview" class="overview" hidden aria-labelledby="overview-title">
     <h2 id="overview-title" class="sr-only">Overview</h2>
+    <nav class="ov-cats no-print" aria-label="Categories">
+      <button type="button" class="ov-cat is-on" data-ov-cat="all" aria-pressed="true">All</button>
+      <button type="button" class="ov-cat" data-ov-cat="patients" aria-pressed="false">Patients</button>
+      <button type="button" class="ov-cat" data-ov-cat="acute" aria-pressed="false">Acute</button>
+      <button type="button" class="ov-cat" data-ov-cat="chronic" aria-pressed="false">Chronic</button>
+      <button type="button" class="ov-cat" data-ov-cat="arv" aria-pressed="false">ARV</button>
+      <button type="button" class="ov-cat" data-ov-cat="scripts" aria-pressed="false">Scripts</button>
+    </nav>
     <details class="fold" id="fold-search" open>
       <summary>Search and filters</summary>
     <div class="ov-filters no-print">
@@ -841,28 +1168,29 @@
       <summary>Totals</summary>
     <p id="ov-blurb" class="ov-blurb"></p>
     <div id="ov-cards" class="ov-cards"></div>
+    <div id="ov-insights" class="ov-cards"></div>
     </details>
     <details class="fold" id="fold-charts">
       <summary>Charts</summary>
-    <div class="ov-grid">
-      <section class="ov-panel" aria-labelledby="ov-daily-title">
+    <div class="ov-grid" id="ov-grid">
+      <section class="ov-panel" id="ov-panel-daily" aria-labelledby="ov-daily-title">
         <h2 id="ov-daily-title">Daily volumes</h2>
-        <div class="chart-legend">
-          <span><i class="sw sw-patients" aria-hidden="true"></i> Patients</span>
-          <span><i class="sw sw-scripts" aria-hidden="true"></i> Scripts</span>
+        <div class="chart-legend" id="ov-daily-legend">
+          <span data-series="patients"><i class="sw sw-patients" aria-hidden="true"></i> Patients</span>
+          <span data-series="scripts"><i class="sw sw-scripts" aria-hidden="true"></i> Scripts</span>
         </div>
         <div id="ov-daily" class="chart-scroll"></div>
       </section>
-      <section class="ov-panel" aria-labelledby="ov-mix-title">
+      <section class="ov-panel" id="ov-panel-mix" aria-labelledby="ov-mix-title">
         <h2 id="ov-mix-title">Script mix</h2>
         <div id="ov-mix"></div>
       </section>
-      <section class="ov-panel" aria-labelledby="ov-hours-title">
+      <section class="ov-panel" id="ov-panel-hours" aria-labelledby="ov-hours-title">
         <h2 id="ov-hours-title">Patients by hour</h2>
         <p class="help-text">Each bar is the hour a slot starts, added up across the days in this search.</p>
         <div id="ov-hours"></div>
       </section>
-      <section class="ov-panel" aria-labelledby="ov-chronic-title">
+      <section class="ov-panel" id="ov-panel-chronic" aria-labelledby="ov-chronic-title">
         <h2 id="ov-chronic-title">Chronic scripts by items</h2>
         <p class="help-text">9+ means 9 or more items on the script. ARV item counts are under Script mix.</p>
         <div id="ov-chronic"></div>
@@ -905,6 +1233,43 @@
   </footer>
 </div>
 <div class="toasts no-print" id="toasts" aria-live="polite"></div>
+<button type="button" id="quick-fab" class="fab no-print" aria-expanded="false" aria-controls="quick-panel"><span aria-hidden="true">+</span><span class="sr-only">Add numbers</span></button>
+<div id="quick-layer" class="quick-layer no-print" hidden>
+  <button type="button" id="quick-backdrop" class="quick-backdrop" aria-label="Close"></button>
+  <div id="quick-panel" class="quick-panel" role="dialog" aria-modal="true" aria-labelledby="quick-title">
+    <div class="quick-handle" aria-hidden="true"></div>
+    <div class="quick-head">
+      <p id="quick-title" class="quick-title">Add numbers</p>
+      <button type="button" id="quick-close" class="icon-btn" aria-label="Close">×</button>
+    </div>
+    <form id="add-record" class="quick-entry no-print">
+      <p class="quick-hint">Pick the hour, type the counts, then save. The next hour opens.</p>
+      <label class="field">Hour
+        <select id="quick-hour" aria-label="Hour"></select>
+      </label>
+      <div class="quick-pair">
+        <label class="field">Patients
+          <input id="quick-patients" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="patients" aria-label="Patients">
+        </label>
+        <label class="field">Acute
+          <input id="quick-acute" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="acute" aria-label="Acute scripts">
+        </label>
+      </div>
+      <fieldset class="quick-set">
+        <legend>Chronic items</legend>
+        <div class="quick-keys" id="quick-chronic"></div>
+      </fieldset>
+      <fieldset class="quick-set">
+        <legend>ARV items</legend>
+        <div class="quick-keys" id="quick-arv"></div>
+      </fieldset>
+      <label class="field">Note
+        <input type="text" id="quick-note" maxlength="500" autocomplete="off" aria-label="Note">
+      </label>
+      <button type="submit" class="btn primary">Save this hour</button>
+    </form>
+  </div>
+</div>
 
 <dialog id="settings" aria-labelledby="settings-title">
   <div class="dialog-top">
@@ -1078,6 +1443,7 @@ var state = {
   currentDate: "",
   view: "sheet",
   overviewSort: { key: "date", dir: "desc" },
+  overviewCategory: "all",
   dirty: false,
   pendingBackup: null,
   backupRecords: [],
@@ -1622,14 +1988,26 @@ function hBars(items, aria) {
   return svg;
 }
 
-function dailyChart(rows) {
+function dailyValue(row, mode) {
+  if (mode === "patients") return row.patients;
+  if (mode === "acute") return row.acute;
+  if (mode === "chronic") return row.chronic;
+  if (mode === "arv") return row.arv;
+  return row.scripts;
+}
+
+function dailyChart(rows, mode) {
+  var single = mode && mode !== "both";
   var peak = null;
   for (var p = 0; p < rows.length; p++) {
-    if (!peak || rows[p].scripts > peak.scripts) peak = rows[p];
+    var score = single ? dailyValue(rows[p], mode) : rows[p].scripts;
+    if (!peak || score > (single ? dailyValue(peak, mode) : peak.scripts)) peak = rows[p];
   }
-  var aria = rows.length
-    ? "Daily patients and scripts for " + rows.length + " day" + (rows.length === 1 ? "" : "s") + ". Highest scripts " + peak.scripts + " on " + formatDate(peak.date) + "."
-    : "No daily volumes in this search.";
+  var aria = !rows.length
+    ? "No daily volumes in this search."
+    : single
+      ? "Daily " + mode + " for " + rows.length + " day" + (rows.length === 1 ? "" : "s") + ". Highest " + dailyValue(peak, mode) + " on " + formatDate(peak.date) + "."
+      : "Daily patients and scripts for " + rows.length + " day" + (rows.length === 1 ? "" : "s") + ". Highest scripts " + peak.scripts + " on " + formatDate(peak.date) + ".";
   var padL = 36;
   var padR = 8;
   var padB = 26;
@@ -1642,8 +2020,12 @@ function dailyChart(rows) {
   var slotW = plotW / count;
   var max = 1;
   for (var i = 0; i < rows.length; i++) {
-    if (rows[i].patients > max) max = rows[i].patients;
-    if (rows[i].scripts > max) max = rows[i].scripts;
+    if (single) {
+      if (dailyValue(rows[i], mode) > max) max = dailyValue(rows[i], mode);
+    } else {
+      if (rows[i].patients > max) max = rows[i].patients;
+      if (rows[i].scripts > max) max = rows[i].scripts;
+    }
   }
   max = niceCeil(max);
   var svg = svgNode("svg", {
@@ -1672,14 +2054,17 @@ function dailyChart(rows) {
     svg.appendChild(tickLabel);
   }
   var step = slotW < 32 ? Math.ceil(32 / slotW) : 1;
-  var barW = Math.min(16, Math.max(2, (slotW - 4) / 2.3));
+  var barW = single ? Math.min(18, Math.max(3, slotW - 6)) : Math.min(16, Math.max(2, (slotW - 4) / 2.3));
   var barGap = Math.min(4, Math.max(1, slotW * 0.06));
+  var singleClass = mode === "patients" ? "bar-patients" : mode === "acute" ? "bar-acute" : mode === "chronic" ? "bar-chronic" : mode === "arv" ? "bar-arv" : "bar-scripts";
   for (var n = 0; n < rows.length; n++) {
     var row = rows[n];
     var x = padL + n * slotW;
-    var pair = barW * 2 + barGap;
+    var pair = single ? barW : barW * 2 + barGap;
     var left = x + Math.max(0, (slotW - pair) / 2);
-    var series = [{ offset: 0, value: row.patients, cls: "bar-patients" }, { offset: barW + barGap, value: row.scripts, cls: "bar-scripts" }];
+    var series = single
+      ? [{ offset: 0, value: dailyValue(row, mode), cls: singleClass }]
+      : [{ offset: 0, value: row.patients, cls: "bar-patients" }, { offset: barW + barGap, value: row.scripts, cls: "bar-scripts" }];
     for (var s = 0; s < series.length; s++) {
       var piece = series[s];
       var h = piece.value <= 0 ? 0 : Math.max(2, Math.round((piece.value / max) * plotH));
@@ -1692,7 +2077,9 @@ function dailyChart(rows) {
         rx: "2"
       });
       var hint = svgNode("title");
-      hint.textContent = formatDate(row.date) + ": " + row.patients + " patients, " + row.scripts + " scripts";
+      hint.textContent = single
+        ? formatDate(row.date) + ": " + dailyValue(row, mode) + " " + mode
+        : formatDate(row.date) + ": " + row.patients + " patients, " + row.scripts + " scripts";
       rect.appendChild(hint);
       svg.appendChild(rect);
     }
@@ -1781,33 +2168,155 @@ function markOverviewRanges() {
   }
 }
 
+function overviewCategory() {
+  var cat = state.overviewCategory || "all";
+  if (cat !== "patients" && cat !== "acute" && cat !== "chronic" && cat !== "arv" && cat !== "scripts") return "all";
+  return cat;
+}
+
+function busiestBy(rows, key) {
+  var best = null;
+  for (var i = 0; i < rows.length; i++) {
+    if (!best || rows[i][key] > best[key]) best = rows[i];
+  }
+  return best;
+}
+
+function markOverviewCategory() {
+  var cat = overviewCategory();
+  var overview = document.getElementById("overview");
+  if (overview) overview.dataset.cat = cat;
+  var buttons = document.querySelectorAll("[data-ov-cat]");
+  for (var i = 0; i < buttons.length; i++) {
+    var on = buttons[i].dataset.ovCat === cat;
+    buttons[i].classList.toggle("is-on", on);
+    buttons[i].setAttribute("aria-pressed", on ? "true" : "false");
+  }
+  var panels = { daily: true, mix: true, hours: true, chronic: true };
+  if (cat === "patients") { panels.mix = false; panels.chronic = false; }
+  if (cat === "acute") { panels.mix = false; panels.hours = false; panels.chronic = false; }
+  if (cat === "chronic") { panels.mix = false; panels.hours = false; }
+  if (cat === "arv") { panels.hours = false; panels.chronic = false; }
+  if (cat === "scripts") { panels.hours = false; panels.chronic = false; }
+  var ids = ["daily", "mix", "hours", "chronic"];
+  for (var p = 0; p < ids.length; p++) {
+    var panel = document.getElementById("ov-panel-" + ids[p]);
+    if (panel) panel.hidden = !panels[ids[p]];
+  }
+  var titles = {
+    all: "Daily volumes",
+    patients: "Patients by day",
+    acute: "Acute scripts by day",
+    chronic: "Chronic scripts by day",
+    arv: "ARV scripts by day",
+    scripts: "Scripts by day"
+  };
+  var dailyTitle = document.getElementById("ov-daily-title");
+  if (dailyTitle) dailyTitle.textContent = titles[cat] || titles.all;
+  var mixTitle = document.getElementById("ov-mix-title");
+  if (mixTitle) mixTitle.textContent = cat === "arv" ? "ARV by items" : "Script mix";
+  var legend = document.querySelectorAll("#ov-daily-legend [data-series]");
+  for (var s = 0; s < legend.length; s++) {
+    var series = legend[s].dataset.series;
+    legend[s].hidden = cat !== "all" && cat !== series;
+  }
+}
+
+function overviewInsights(report, cat) {
+  var nodes = [];
+  if (!report || !report.rows.length || report.invalidRange) return nodes;
+  var quietKey = cat === "patients" ? "patients" : "scripts";
+  if ((cat === "all" || cat === "scripts" || cat === "patients") && report.rows.length > 1) {
+    var quiet = report.rows[0];
+    for (var i = 1; i < report.rows.length; i++) if (report.rows[i][quietKey] < quiet[quietKey]) quiet = report.rows[i];
+    nodes.push(overviewCard("Quietest day", String(quiet[quietKey]), quiet.label));
+  }
+  if (cat === "all" || cat === "scripts") {
+    var buckets = {};
+    for (var r = 0; r < report.rows.length; r++) {
+      var name = weekday(report.rows[r].date);
+      buckets[name] = (buckets[name] || 0) + report.rows[r].scripts;
+    }
+    var bestName = "";
+    var bestVal = -1;
+    for (var bucket in buckets) if (buckets[bucket] > bestVal) { bestVal = buckets[bucket]; bestName = bucket; }
+    if (bestName) nodes.push(overviewCard("Busiest weekday", bestName, bestVal + " scripts"));
+  }
+  if (cat === "all" || cat === "patients") {
+    var morning = 0;
+    var later = 0;
+    for (var h = 0; h < report.hours.length; h++) {
+      var hourNum = Number(String(report.hours[h].label).slice(0, 2));
+      if (hourNum < 12) morning += report.hours[h].patients;
+      else later += report.hours[h].patients;
+    }
+    var people = morning + later;
+    if (people) nodes.push(overviewCard("Before noon", Math.round(morning / people * 100) + "%", morning + " of " + people + " patients"));
+  }
+  if ((cat === "all" || cat === "chronic") && report.sum.chronic) {
+    var nine = report.chronicKeys["9+"] || 0;
+    nodes.push(overviewCard("9 or more items", Math.round(nine / report.sum.chronic * 100) + "%", nine + " of " + report.sum.chronic + " chronic scripts"));
+  }
+  if ((cat === "all" || cat === "scripts" || cat === "acute" || cat === "arv") && report.sum.patients) {
+    var each = Math.round((report.sum.scripts / report.sum.patients) * 10) / 10;
+    nodes.push(overviewCard("Scripts per patient", String(each), "across the days in this search"));
+  }
+  if (cat === "all" && report.rows.length > 1) {
+    var rise = null;
+    for (var j = 1; j < report.rows.length; j++) {
+      var diff = report.rows[j].scripts - report.rows[j - 1].scripts;
+      if (!rise || diff > rise.diff) rise = { diff: diff, label: report.rows[j].label };
+    }
+    if (rise && rise.diff > 0) nodes.push(overviewCard("Biggest rise", "+" + rise.diff, rise.label));
+    var noted = 0;
+    for (var k = 0; k < report.rows.length; k++) if (report.rows[k].noteItems && report.rows[k].noteItems.length) noted++;
+    if (noted) nodes.push(overviewCard("Days with notes", String(noted), "of " + report.rows.length + " saved days"));
+  }
+  return nodes;
+}
+
 function renderOverview() {
+  var cat = overviewCategory();
   var filters = overviewFilters();
   var report = collectOverview(state.days, filters);
   document.getElementById("ov-range-error").hidden = !report.invalidRange;
   markOverviewRanges();
+  markOverviewCategory();
   var blurb = document.getElementById("ov-blurb");
+  var focus = cat === "all" ? null : busiestBy(report.rows, cat);
   if (report.invalidRange) blurb.textContent = "Choose a From date that is on or before To.";
   else if (!report.rows.length) blurb.textContent = state.days.size ? "No saved days match this search." : "No days stored yet. Record hours on the Sheet and they will show up here.";
   else {
     var first = report.rows[0];
     var last = report.rows[report.rows.length - 1];
-    var busy = report.busiestDay;
+    var busy = cat === "all" || cat === "scripts" ? report.busiestDay : focus;
+    var busyBit = "";
+    if (busy && (cat === "all" || cat === "scripts")) busyBit = " · busiest " + busy.label + ", " + busy.scripts + " scripts";
+    else if (busy) busyBit = " · highest " + busy.label + ", " + busy[cat] + " " + cat;
     blurb.textContent = report.rows.length + " saved day" + (report.rows.length === 1 ? "" : "s")
       + " · " + formatDate(first.date) + " to " + formatDate(last.date)
-      + (busy ? " · busiest " + busy.label + ", " + busy.scripts + " scripts" : "");
+      + busyBit;
   }
   var cards = document.getElementById("ov-cards");
-  cards.replaceChildren(
-    overviewCard("Days", String(report.sum.days), report.rows.length ? report.rows.length + " with hours" : ""),
-    overviewCard("Patients", String(report.sum.patients), averageLabel(report.sum.patients, report.sum.days)),
-    overviewCard("Scripts", String(report.sum.scripts), averageLabel(report.sum.scripts, report.sum.days)),
-    overviewCard("Acute", String(report.sum.acute), ""),
-    overviewCard("Chronic", String(report.sum.chronic), ""),
-    overviewCard("ARV", String(report.sum.arv), ""),
-    overviewCard("Busiest day", report.busiestDay ? String(report.busiestDay.scripts) : "0", report.busiestDay ? report.busiestDay.label : "No saved days"),
-    overviewCard("Busiest hour", report.busiestHour ? String(report.busiestHour.patients) : "0", report.busiestHour ? report.busiestHour.label + " · " + report.busiestHour.scripts + " scripts" : "No saved hours")
-  );
+  var cardNodes = [overviewCard("Days", String(report.sum.days), report.rows.length ? report.rows.length + " with hours" : "")];
+  if (cat === "all" || cat === "patients") cardNodes.push(overviewCard("Patients", String(report.sum.patients), averageLabel(report.sum.patients, report.sum.days)));
+  if (cat === "all" || cat === "scripts") cardNodes.push(overviewCard("Scripts", String(report.sum.scripts), averageLabel(report.sum.scripts, report.sum.days)));
+  if (cat === "all" || cat === "acute") cardNodes.push(overviewCard("Acute", String(report.sum.acute), percentSuffix(report.sum.acute, report.sum.scripts).replace(" · ", "")));
+  if (cat === "all" || cat === "chronic") cardNodes.push(overviewCard("Chronic", String(report.sum.chronic), percentSuffix(report.sum.chronic, report.sum.scripts).replace(" · ", "")));
+  if (cat === "all" || cat === "arv") cardNodes.push(overviewCard("ARV", String(report.sum.arv), percentSuffix(report.sum.arv, report.sum.scripts).replace(" · ", "")));
+  if (cat === "all") {
+    cardNodes.push(overviewCard("Busiest day", report.busiestDay ? String(report.busiestDay.scripts) : "0", report.busiestDay ? report.busiestDay.label : "No saved days"));
+    cardNodes.push(overviewCard("Busiest hour", report.busiestHour ? String(report.busiestHour.patients) : "0", report.busiestHour ? report.busiestHour.label + " · " + report.busiestHour.scripts + " scripts" : "No saved hours"));
+  } else if (focus) {
+    cardNodes.push(overviewCard("Highest day", String(focus[cat]), focus.label));
+  }
+  cards.replaceChildren.apply(cards, cardNodes);
+  var insights = document.getElementById("ov-insights");
+  if (insights) {
+    var extra = overviewInsights(report, cat);
+    insights.replaceChildren.apply(insights, extra);
+    insights.hidden = !extra.length;
+  }
   var daily = document.getElementById("ov-daily");
   var mix = document.getElementById("ov-mix");
   var hours = document.getElementById("ov-hours");
@@ -1823,21 +2332,27 @@ function renderOverview() {
     hours.appendChild(chartEmpty(empty));
     chronic.appendChild(chartEmpty(empty));
   } else {
-    daily.appendChild(dailyChart(report.rows));
+    daily.appendChild(dailyChart(report.rows, cat === "all" ? "both" : cat));
     var scripts = report.sum.scripts;
-    mix.appendChild(hBars([
-      { label: "Acute", value: report.sum.acute, cls: "bar-acute", suffix: percentSuffix(report.sum.acute, scripts), hint: report.sum.acute + " acute scripts" },
-      { label: "Chronic", value: report.sum.chronic, cls: "bar-chronic", suffix: percentSuffix(report.sum.chronic, scripts), hint: report.sum.chronic + " chronic scripts" },
-      { label: "ARV", value: report.sum.arv, cls: "bar-arv", suffix: percentSuffix(report.sum.arv, scripts), hint: report.sum.arv + " ARV scripts" }
-    ], "Script mix. Acute " + report.sum.acute + ", chronic " + report.sum.chronic + ", ARV " + report.sum.arv + "."));
-    var arvHeading = document.createElement("h3");
-    arvHeading.className = "ov-sub";
-    arvHeading.textContent = "ARV by items";
-    mix.appendChild(arvHeading);
-    var arvItems = GROUP_BY_ID.arv.keys.map(function (key) {
-      return { label: key, value: report.arvKeys[key], cls: "bar-arv", hint: report.arvKeys[key] + " ARV scripts with " + key + (key === "1" ? " item" : " items") };
-    });
-    mix.appendChild(hBars(arvItems, "ARV scripts by item count."));
+    if (cat !== "arv") {
+      mix.appendChild(hBars([
+        { label: "Acute", value: report.sum.acute, cls: "bar-acute", suffix: percentSuffix(report.sum.acute, scripts), hint: report.sum.acute + " acute scripts" },
+        { label: "Chronic", value: report.sum.chronic, cls: "bar-chronic", suffix: percentSuffix(report.sum.chronic, scripts), hint: report.sum.chronic + " chronic scripts" },
+        { label: "ARV", value: report.sum.arv, cls: "bar-arv", suffix: percentSuffix(report.sum.arv, scripts), hint: report.sum.arv + " ARV scripts" }
+      ], "Script mix. Acute " + report.sum.acute + ", chronic " + report.sum.chronic + ", ARV " + report.sum.arv + "."));
+    }
+    if (cat === "all" || cat === "arv") {
+      if (cat !== "arv") {
+        var arvHeading = document.createElement("h3");
+        arvHeading.className = "ov-sub";
+        arvHeading.textContent = "ARV by items";
+        mix.appendChild(arvHeading);
+      }
+      var arvItems = GROUP_BY_ID.arv.keys.map(function (key) {
+        return { label: key, value: report.arvKeys[key], cls: "bar-arv", hint: report.arvKeys[key] + " ARV scripts with " + key + (key === "1" ? " item" : " items") };
+      });
+      mix.appendChild(hBars(arvItems, "ARV scripts by item count."));
+    }
     hours.appendChild(hBars(report.hours.map(function (hour) {
       return {
         label: hour.label,
@@ -1859,6 +2374,7 @@ function renderOverview() {
     var on = sort.key === key;
     buttons[b].textContent = buttons[b].dataset.label + (on ? (sort.dir === "asc" ? " \u2191" : " \u2193") : "");
     buttons[b].parentElement.setAttribute("aria-sort", on ? (sort.dir === "asc" ? "ascending" : "descending") : "none");
+    buttons[b].parentElement.classList.toggle("is-cat", cat !== "all" && key === cat);
   }
   var body = document.getElementById("ov-body");
   body.replaceChildren();
@@ -1893,6 +2409,7 @@ function renderOverview() {
     ["patients", "acute", "chronic", "arv", "scripts"].forEach(function (field) {
       var cell = document.createElement("td");
       cell.textContent = String(item[field]);
+      if (cat !== "all" && field === cat) cell.classList.add("is-cat");
       rowEl.appendChild(cell);
     });
     var notesCell = document.createElement("td");
@@ -1921,9 +2438,59 @@ function renderOverview() {
 }
 
 function showView(name) {
-  state.view = name === "overview" ? "overview" : "sheet";
+  var next = name === "overview" ? "overview" : "sheet";
+  var changed = next !== state.view || document.body.classList.contains("is-tablet");
+  if (document.body.classList.contains("is-tablet")) setTabletMode(false);
+  state.view = next;
   try { sessionStorage.setItem("montebello-stats-view", state.view); } catch (err) {}
+  if (next === "overview") {
+    var layer = document.getElementById("quick-layer");
+    if (layer && !layer.hidden) setQuickOpen(false);
+  }
   renderAll();
+  if (changed) window.scrollTo(0, 0);
+}
+
+function tabletInsight(day) {
+  if (!day || !day.slots.length) return "No hours on this day yet.";
+  var totals = dayTotals(day);
+  var best = null;
+  for (var i = 0; i < day.slots.length; i++) {
+    var slot = day.slots[i];
+    var patients = num(slot.values && slot.values.patients);
+    var scripts = rowScripts(slot);
+    var count = scripts == null ? 0 : scripts;
+    if (!best || patients > best.patients || (patients === best.patients && count > best.scripts)) {
+      best = {
+        label: String(slot.start || "").slice(0, 5) + "\u2013" + String(slot.end || "").slice(0, 5),
+        patients: patients,
+        scripts: count
+      };
+    }
+  }
+  var parts = [];
+  if (best && (best.patients || best.scripts)) parts.push("Busiest hour " + best.label + ", " + best.patients + " patients");
+  if (totals.groups.patients) {
+    var each = Math.round((totals.scripts / totals.groups.patients) * 10) / 10;
+    parts.push(each + " scripts per patient");
+  }
+  var end = state.currentDate;
+  var start = shiftDate(end, -6);
+  var weekPatients = 0;
+  var weekScripts = 0;
+  var weekDays = 0;
+  state.days.forEach(function (raw) {
+    var normalized;
+    try { normalized = normalizeDay(raw); }
+    catch (err) { return; }
+    if (!normalized.slots.length || normalized.date < start || normalized.date > end) return;
+    var weekTotals = dayTotals(normalized);
+    weekPatients += weekTotals.groups.patients;
+    weekScripts += weekTotals.scripts;
+    weekDays++;
+  });
+  if (weekDays > 1) parts.push("Last 7 days " + weekPatients + " patients, " + weekScripts + " scripts");
+  return parts.join(" \u00b7 ") || "Enter counts and the day totals appear here.";
 }
 
 function currentDay() {
@@ -2852,16 +3419,36 @@ function renderSummary() {
   for (var i = 0; i < COLUMN_GROUPS.length; i++) summary.appendChild(chip(COLUMN_GROUPS[i].id, COLUMN_GROUPS[i].short));
   summary.appendChild(chip("scripts", "Scripts"));
   summary.dataset.ready = "1";
+  var tabletStats = document.getElementById("tablet-stats");
+  if (tabletStats && tabletStats.dataset.ready !== "1") {
+    function tabletChip(id, label) {
+      var item = document.createElement("span");
+      item.className = "tablet-stat";
+      var name = document.createElement("span");
+      name.textContent = label;
+      var strong = document.createElement("strong");
+      strong.setAttribute("data-sum", id);
+      strong.textContent = "0";
+      item.append(name, strong);
+      return item;
+    }
+    tabletStats.replaceChildren();
+    for (var t = 0; t < COLUMN_GROUPS.length; t++) tabletStats.appendChild(tabletChip(COLUMN_GROUPS[t].id, COLUMN_GROUPS[t].short));
+    tabletStats.appendChild(tabletChip("scripts", "Scripts"));
+    tabletStats.dataset.ready = "1";
+  }
 }
 
 function updateTotals(day) {
   var totals = day && day.slots.length ? dayTotals(day) : null;
-  var nodes = document.querySelectorAll("#summary strong[data-sum]");
+  var nodes = document.querySelectorAll("#summary strong[data-sum], #tablet-stats strong[data-sum]");
   for (var i = 0; i < nodes.length; i++) {
     var id = nodes[i].getAttribute("data-sum");
     var value = !totals ? 0 : id === "scripts" ? totals.scripts : (totals.groups[id] || 0);
     nodes[i].textContent = String(value);
   }
+  var insight = document.getElementById("tablet-insight");
+  if (insight && document.body.classList.contains("is-tablet")) insight.textContent = tabletInsight(day);
   var table = document.getElementById("stats");
   if (!table || table.hidden || !totals) return;
   var leaves = leafColumns();
@@ -3106,14 +3693,18 @@ function renderChrome() {
   var backup = document.getElementById("backup-status");
   backup.textContent = when ? "Last backup " + formatWhen(when) : "No backup yet";
   backup.title = "Full history JSON saved to Downloads and kept in Settings.";
+  document.body.dataset.view = overview ? "overview" : "sheet";
   var sheet = document.getElementById("sheet");
   var overviewEl = document.getElementById("overview");
   if (sheet) sheet.hidden = overview;
   if (overviewEl) overviewEl.hidden = !overview;
+  var tabletOn = document.body.classList.contains("is-tablet");
   var sheetBtn = document.getElementById("view-sheet");
   var overviewBtn = document.getElementById("view-overview");
-  if (sheetBtn) sheetBtn.setAttribute("aria-pressed", overview ? "false" : "true");
+  var tabletBtn = document.getElementById("tablet-mode");
+  if (sheetBtn) sheetBtn.setAttribute("aria-pressed", !overview && !tabletOn ? "true" : "false");
   if (overviewBtn) overviewBtn.setAttribute("aria-pressed", overview ? "true" : "false");
+  if (tabletBtn) tabletBtn.setAttribute("aria-pressed", tabletOn ? "true" : "false");
 }
 
 function renderAll() {
@@ -3123,6 +3714,7 @@ function renderAll() {
   var daysDialog = document.getElementById("days");
   if (daysDialog && daysDialog.open) renderDayList();
   if (state.view === "overview") renderOverview();
+  placeTabletTable();
 }
 
 function renderDayList() {
@@ -4186,9 +4778,60 @@ function clearPrintValues() {
   for (var i = 0; i < nodes.length; i++) nodes[i].remove();
 }
 
+function setTableFull(on) {
+  var btn = document.getElementById("table-full");
+  if (on) {
+    var hours = document.getElementById("fold-hours");
+    if (hours) hours.open = true;
+  }
+  document.body.classList.toggle("is-full", !!on);
+  if (!btn) return;
+  btn.setAttribute("aria-pressed", on ? "true" : "false");
+  btn.textContent = on ? "Exit" : "Full screen";
+  btn.setAttribute("aria-label", on ? "Exit full screen" : "Full screen table");
+}
+
+function placeTabletTable() {
+  var pane = document.querySelector(".hours-pane");
+  if (!pane || !document.body.classList.contains("is-tablet")) return;
+  var top = Math.round(pane.getBoundingClientRect().top);
+  document.documentElement.style.setProperty("--tablet-table-top", Math.max(0, top) + "px");
+}
+
+function setTabletMode(on) {
+  on = !!on;
+  if (on && document.body.classList.contains("is-full")) setTableFull(false);
+  document.body.classList.toggle("is-tablet", on);
+  var glance = document.getElementById("tablet-glance");
+  if (glance) glance.hidden = !on;
+  if (on) {
+    var tools = document.getElementById("fold-tools");
+    var hours = document.getElementById("fold-hours");
+    if (tools) tools.open = true;
+    if (hours) hours.open = true;
+  }
+  try { sessionStorage.setItem("montebello-stats-tablet", on ? "on" : "off"); } catch (err) {}
+}
+
+function setQuickOpen(open) {
+  var layer = document.getElementById("quick-layer");
+  var fab = document.getElementById("quick-fab");
+  if (!layer || !fab) return;
+  var wasOpen = !layer.hidden;
+  layer.hidden = !open;
+  fab.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open && !wasOpen) {
+    var hour = document.getElementById("quick-hour");
+    if (hour) hour.focus();
+  } else if (!open && wasOpen && fab.offsetParent) {
+    fab.focus();
+  }
+}
+
 function bind() {
   rememberFolds();
   buildQuickKeys();
+  window.addEventListener("resize", placeTabletTable);
   window.addEventListener("beforeprint", function () {
     var folds = document.querySelectorAll("details.fold");
     for (var i = 0; i < folds.length; i++) {
@@ -4256,6 +4899,38 @@ function bind() {
   document.getElementById("clear-numbers").addEventListener("click", clearNumbers);
   document.getElementById("open-export").addEventListener("click", openExport);
   document.getElementById("print-btn").addEventListener("click", function () { window.print(); });
+  var tableFull = document.getElementById("table-full");
+  if (tableFull) {
+    tableFull.addEventListener("click", function (event) {
+      event.stopPropagation();
+      setTableFull(!document.body.classList.contains("is-full"));
+    });
+  }
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    var confirmDialog = document.getElementById("confirm");
+    if (confirmDialog && confirmDialog.open) return;
+    var layer = document.getElementById("quick-layer");
+    if (layer && !layer.hidden) {
+      setQuickOpen(false);
+      return;
+    }
+    if (document.body.classList.contains("is-full")) {
+      if (event.target && event.target.closest && event.target.closest("dialog")) return;
+      setTableFull(false);
+      return;
+    }
+    if (document.body.classList.contains("is-tablet")) {
+      setTabletMode(false);
+      renderChrome();
+    }
+  }, true);
+  document.getElementById("quick-fab").addEventListener("click", function () {
+    var layer = document.getElementById("quick-layer");
+    setQuickOpen(layer.hidden);
+  });
+  document.getElementById("quick-close").addEventListener("click", function () { setQuickOpen(false); });
+  document.getElementById("quick-backdrop").addEventListener("click", function () { setQuickOpen(false); });
   document.getElementById("sheet-backup").addEventListener("click", function () {
     runBackup({ auto: false }).catch(function (err) {
       console.error(err);
@@ -4265,6 +4940,32 @@ function bind() {
   document.getElementById("open-settings").addEventListener("click", openSettings);
   document.getElementById("view-sheet").addEventListener("click", function () { showView("sheet"); });
   document.getElementById("view-overview").addEventListener("click", function () { showView("overview"); });
+  document.getElementById("tablet-mode").addEventListener("click", function () {
+    var on = !document.body.classList.contains("is-tablet");
+    if (on) {
+      state.view = "sheet";
+      try { sessionStorage.setItem("montebello-stats-view", "sheet"); } catch (err) {}
+    }
+    setTabletMode(on);
+    renderAll();
+    if (on) window.scrollTo(0, 0);
+  });
+  document.querySelector(".ov-cats").addEventListener("click", function (event) {
+    var el = eventEl(event);
+    var btn = el && el.closest ? el.closest("[data-ov-cat]") : null;
+    if (!btn) return;
+    var cat = btn.dataset.ovCat;
+    state.overviewCategory = cat;
+    try { sessionStorage.setItem("montebello-stats-ov-cat", cat); } catch (err) {}
+    state.overviewSort = cat === "all" ? { key: "date", dir: "desc" } : { key: cat, dir: "desc" };
+    var totals = document.getElementById("fold-totals");
+    var charts = document.getElementById("fold-charts");
+    var history = document.getElementById("fold-history");
+    if (totals) totals.open = true;
+    if (charts) charts.open = true;
+    if (history) history.open = true;
+    renderOverview();
+  });
   document.getElementById("ov-search").addEventListener("input", renderOverview);
   document.getElementById("ov-note").addEventListener("input", renderOverview);
   document.getElementById("ov-notes-only").addEventListener("click", function () {
@@ -4555,7 +5256,11 @@ async function init() {
   state.view = "sheet";
   try {
     if (sessionStorage.getItem("montebello-stats-view") === "overview") state.view = "overview";
+    var savedCat = sessionStorage.getItem("montebello-stats-ov-cat");
+    if (savedCat) state.overviewCategory = savedCat;
   } catch (err) {}
+  var restoreTablet = false;
+  try { restoreTablet = sessionStorage.getItem("montebello-stats-tablet") === "on" && state.view !== "overview"; } catch (err) {}
   state.settings = defaultSettings();
   try {
     state.db = await openDb();
@@ -4568,6 +5273,7 @@ async function init() {
   applyTheme(state.settings.theme);
   bind();
   rememberDate();
+  if (restoreTablet) setTabletMode(true);
   renderAll();
   scheduleBackupChecks();
 }
