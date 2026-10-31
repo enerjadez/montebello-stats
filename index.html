@@ -316,6 +316,7 @@
   th.tone-chronic { background: var(--th-chronic); }
   th.tone-arv { background: var(--th-arv); }
   th.tone-scripts { background: var(--th-scripts); }
+  th.c-notes { background: var(--th-time); }
   th.sub.tone-chronic { background: var(--sub-chronic); color: var(--sub-fg); }
   th.sub.tone-arv { background: var(--sub-arv); color: var(--sub-fg); }
   .c-time { min-width: 168px; }
@@ -485,16 +486,40 @@
   #fold-hours[open] { flex: 1; min-height: 0; overflow: auto; }
   #fold-hours:not([open]) { flex: 0 0 auto; }
   #fold-hours[open] .table-card { min-height: calc(100% - 72px); }
-  .add-record {
+  .quick-entry {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 8px;
-    align-items: flex-end;
-    padding: 8px;
+    padding: 10px 12px 12px;
     border-top: 1px solid var(--line);
     background: var(--surface);
   }
-  .add-record .field { margin: 0; min-width: 120px; }
+  .quick-title { margin: 0; font-size: 0.95rem; font-weight: 750; }
+  .quick-hint { margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .quick-entry .field { margin: 0; }
+  .quick-entry select, .quick-entry input { width: 100%; font-size: 16px; }
+  .quick-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .quick-set { margin: 0; padding: 6px 8px 8px; }
+  .quick-keys { display: flex; flex-wrap: wrap; gap: 6px; }
+  .quick-key {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 52px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .quick-key input {
+    width: 52px;
+    min-height: 40px;
+    padding: 0 2px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .quick-entry button[type="submit"] { width: 100%; }
+  .print-time, .print-val { display: none; }
   .ov-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .ov-note-hit { border-radius: 6px; background: color-mix(in srgb, var(--accent) 18%, transparent); }
   .overview { flex: 1; min-height: 0; overflow: auto; padding-bottom: 8px; }
@@ -591,9 +616,6 @@
     .sheet-more { margin-left: 12px; margin-right: 12px; }
     .help { display: none; }
     .table-card { margin: 0 8px 8px; }
-    .add-record { display: grid; grid-template-columns: 1fr 1fr; }
-    .add-record .field { min-width: 0; }
-    .add-record button { grid-column: 1 / -1; }
     details.fold > summary { padding-left: 12px; padding-right: 12px; }
     .table-wrap { -webkit-overflow-scrolling: touch; }
     .c-time { min-width: 92px; }
@@ -620,12 +642,67 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
   @media print {
-    .no-print, .col-del { display: none !important; }
-    body, .app { height: auto; background: white; color: black; }
-    .table-card { box-shadow: none; border: none; margin: 0; overflow: visible; }
-    .table-wrap, .overview, .ov-table-wrap { overflow: visible; max-height: none; }
-    .stats th, .stats td, .stats tfoot th, .stats tfoot td { position: static; color: black; }
-    @page { size: landscape; margin: 8mm; }
+    .no-print, .col-del, .skip, #overview, #fold-tools, #storage-error, dialog { display: none !important; }
+    details.fold > summary { display: none !important; }
+    html, body, .app {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      background: #fff !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .app { display: block; max-width: none; padding: 0; }
+    .top { padding: 0 0 2px; }
+    .eyebrow { display: block !important; }
+    h1 { font-size: 14pt; }
+    #report-title { display: block !important; font-size: 9pt; margin: 0; }
+    .day-nav { padding: 0 0 6px; }
+    #day-line { font-size: 12pt; }
+    #sheet, .hours-pane, #fold-hours, #fold-hours[open], .table-card, .table-wrap {
+      display: block !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      flex: none !important;
+    }
+    .table-card {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+    .stats {
+      min-width: 0 !important;
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 10pt;
+    }
+    .stats th, .stats td {
+      position: static !important;
+      top: auto !important;
+      left: auto !important;
+      height: auto !important;
+      padding: 3px 2px;
+      box-shadow: none !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .stats thead tr:first-child th:first-child { width: 15%; }
+    .stats thead tr:first-child th.c-single { width: 6.5%; }
+    .stats thead tr:first-child th.tone-chronic { width: 36%; }
+    .stats thead tr:first-child th.tone-arv { width: 12%; }
+    .stats thead tr:first-child th.c-scripts { width: 6.5%; }
+    .stats thead tr:first-child th.c-notes { width: 17.5%; }
+    .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; }
+    #stats input, .time-dash { display: none !important; }
+    .print-time, .print-val { display: inline; font-size: 10pt; font-variant-numeric: tabular-nums; }
+    .c-notes .print-val { display: block; text-align: left; white-space: normal; word-break: break-word; }
+    .stats tr, .stats thead { break-inside: avoid; page-break-inside: avoid; }
+    @page { size: A4 landscape; margin: 8mm; }
   }
 </style>
 </head>
@@ -679,7 +756,7 @@
   </details>
   <details class="help no-print">
     <summary>How to record</summary>
-    <p>Each row is one hour. Patients is the number of people. Acute is the number of acute scripts. Under Chronic, each number is how many chronic scripts had that many items. 9+ means 9 or more. Under ARV, 1, 2 and 3 are how many ARV scripts had that many items. Scripts is acute + chronic + ARV. Arrow keys move across the grid. Enter moves down. Numbers save on this device as you type. Overview charts every saved day and can search dates, weekdays, notes, and totals.</p>
+    <p>Each row is one hour. Patients is the number of people. Acute is the number of acute scripts. Under Chronic, each number is how many chronic scripts had that many items. 9+ means 9 or more. Under ARV, 1, 2 and 3 are how many ARV scripts had that many items. Scripts is acute + chronic + ARV. Arrow keys move across the grid. Enter moves down. Numbers save on this device as you type. Under the table, pick the hour and type the counts, then save. The next hour opens. Overview charts every saved day and can search dates, weekdays, notes, and totals.</p>
   </details>
   <p class="scroll-hint no-print">Swipe sideways for chronic, ARV, scripts and notes.</p>
   </details>
@@ -699,14 +776,32 @@
     <div class="table-wrap">
       <table id="stats" class="stats" hidden></table>
     </div>
-    <form id="add-record" class="add-record no-print">
-      <label class="field">From
-        <input type="time" id="add-start" value="07:00" required>
+    <form id="add-record" class="quick-entry no-print">
+      <p class="quick-title">Add numbers</p>
+      <p class="quick-hint">Pick the hour, type the counts, then save. The next hour opens.</p>
+      <label class="field">Hour
+        <select id="quick-hour" aria-label="Hour"></select>
       </label>
-      <label class="field">To
-        <input type="time" id="add-end" value="08:00" required>
+      <div class="quick-pair">
+        <label class="field">Patients
+          <input id="quick-patients" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="patients" aria-label="Patients">
+        </label>
+        <label class="field">Acute
+          <input id="quick-acute" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="acute" aria-label="Acute scripts">
+        </label>
+      </div>
+      <fieldset class="quick-set">
+        <legend>Chronic items</legend>
+        <div class="quick-keys" id="quick-chronic"></div>
+      </fieldset>
+      <fieldset class="quick-set">
+        <legend>ARV items</legend>
+        <div class="quick-keys" id="quick-arv"></div>
+      </fieldset>
+      <label class="field">Note
+        <input type="text" id="quick-note" maxlength="500" autocomplete="off" aria-label="Note">
       </label>
-      <button type="submit" class="btn primary">Add this record</button>
+      <button type="submit" class="btn primary">Save this hour</button>
     </form>
   </div>
   </details>
@@ -994,6 +1089,9 @@ var settingsTimer = 0;
 var saveErrorToasted = false;
 var confirmWait = null;
 var channel = null;
+var quickLoadedId = "";
+var quickLock = false;
+var quickBusy = false;
 
 function pad(n) { return String(n).padStart(2, "0"); }
 
@@ -2898,7 +2996,11 @@ function renderRow(slot, nowId) {
   time.className = "sticky-col c-time";
   var wrap = document.createElement("div");
   wrap.className = "slot-time";
-  wrap.append(timeInput(slot, "start"), document.createTextNode("\u2013"), timeInput(slot, "end"));
+  var dash = document.createElement("span");
+  dash.className = "time-dash";
+  dash.setAttribute("aria-hidden", "true");
+  dash.textContent = "\u2013";
+  wrap.append(timeInput(slot, "start"), dash, timeInput(slot, "end"));
   time.appendChild(wrap);
   tr.appendChild(time);
   var leaves = leafColumns();
@@ -3017,6 +3119,7 @@ function renderChrome() {
 function renderAll() {
   renderChrome();
   renderTable();
+  refreshQuickHours();
   var daysDialog = document.getElementById("days");
   if (daysDialog && daysDialog.open) renderDayList();
   if (state.view === "overview") renderOverview();
@@ -3154,6 +3257,11 @@ function stepDay(delta) {
 
 async function setDate(iso) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || iso === state.currentDate) return;
+  if (typeof document !== "undefined" && !(await confirmLeaveQuick())) {
+    var dateInput = document.getElementById("work-date");
+    if (dateInput) dateInput.value = state.currentDate;
+    return;
+  }
   await flushSave();
   state.currentDate = iso;
   rememberDate();
@@ -3399,50 +3507,298 @@ function onTimeChange(input) {
   });
 }
 
-async function addSpecificRecord(startValue, endValue) {
-  var start = validTime(startValue || "");
-  var end = validTime(endValue || "");
-  if (!start || !end || end <= start) {
-    toast("Choose a start time before the end time.");
+function preferredQuickSlot(day) {
+  var slots = day && day.slots ? day.slots : [];
+  if (!slots.length) return null;
+  var nowId = currentHourSlotId(day);
+  if (nowId) {
+    for (var i = 0; i < slots.length; i++) if (slots[i].id === nowId) return slots[i];
+  }
+  for (var e = 0; e < slots.length; e++) if (!slotHasData(slots[e])) return slots[e];
+  return slots[0];
+}
+
+function buildQuickKeys() {
+  var ids = ["chronic", "arv"];
+  for (var i = 0; i < ids.length; i++) {
+    var group = GROUP_BY_ID[ids[i]];
+    var host = document.getElementById("quick-" + ids[i]);
+    if (!group || !host || group.type !== "split") continue;
+    host.replaceChildren();
+    for (var k = 0; k < group.keys.length; k++) {
+      var label = document.createElement("label");
+      label.className = "quick-key";
+      var span = document.createElement("span");
+      span.textContent = group.keys[k];
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "quick-num";
+      input.inputMode = "numeric";
+      input.maxLength = 5;
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.enterKeyHint = "next";
+      input.dataset.group = group.id;
+      input.dataset.key = group.keys[k];
+      input.setAttribute("aria-label", subAria(group, group.keys[k]));
+      label.append(span, input);
+      host.appendChild(label);
+    }
+  }
+}
+
+function readQuickForm() {
+  if (!document.getElementById("quick-patients")) return null;
+  var values = blankValues();
+  var inputs = document.querySelectorAll("#add-record .quick-num");
+  for (var i = 0; i < inputs.length; i++) {
+    var input = inputs[i];
+    var group = GROUP_BY_ID[input.dataset.group];
+    if (!group) continue;
+    var n = sanitizeNum(input.value);
+    if (group.type === "single") values[group.id] = n;
+    else if (input.dataset.key) values[group.id][input.dataset.key] = n;
+  }
+  var noteEl = document.getElementById("quick-note");
+  return { values: values, notes: noteEl ? noteEl.value.slice(0, 500) : "" };
+}
+
+function formIsBlank(form) {
+  if (!form) return true;
+  if (form.notes.trim()) return false;
+  for (var i = 0; i < COLUMN_GROUPS.length; i++) {
+    var group = COLUMN_GROUPS[i];
+    if (group.type === "single") {
+      if (form.values[group.id] != null) return false;
+    } else {
+      for (var k = 0; k < group.keys.length; k++) {
+        if (form.values[group.id][group.keys[k]] != null) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function sameQuick(form, slot) {
+  if (!form || !slot) return false;
+  if ((slot.notes || "") !== form.notes) return false;
+  for (var i = 0; i < COLUMN_GROUPS.length; i++) {
+    var group = COLUMN_GROUPS[i];
+    if (group.type === "single") {
+      if (slot.values[group.id] !== form.values[group.id]) return false;
+    } else {
+      for (var k = 0; k < group.keys.length; k++) {
+        if (slot.values[group.id][group.keys[k]] !== form.values[group.id][group.keys[k]]) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function quickDirty() {
+  var form = readQuickForm();
+  if (!form) return false;
+  var slot = findSlot(quickLoadedId);
+  if (!slot) return !formIsBlank(form);
+  return !sameQuick(form, slot);
+}
+
+function loadQuickSlot(slot) {
+  quickLoadedId = slot ? slot.id : "";
+  var inputs = document.querySelectorAll("#add-record .quick-num");
+  for (var i = 0; i < inputs.length; i++) {
+    var input = inputs[i];
+    var group = GROUP_BY_ID[input.dataset.group];
+    var value = null;
+    if (slot && group) {
+      if (group.type === "single") value = slot.values[group.id];
+      else value = slot.values[group.id][input.dataset.key];
+    }
+    input.value = value == null ? "" : String(value);
+  }
+  var note = document.getElementById("quick-note");
+  if (note) note.value = slot && slot.notes ? slot.notes : "";
+}
+
+function focusQuickPatients() {
+  var input = document.getElementById("quick-patients");
+  if (!input) return;
+  input.focus();
+  if (input.select) input.select();
+}
+
+function applyFormToSlot(slot, form) {
+  for (var i = 0; i < COLUMN_GROUPS.length; i++) {
+    var group = COLUMN_GROUPS[i];
+    if (group.type === "single") slot.values[group.id] = form.values[group.id];
+    else {
+      for (var k = 0; k < group.keys.length; k++) slot.values[group.id][group.keys[k]] = form.values[group.id][group.keys[k]];
+    }
+  }
+  slot.notes = form.notes;
+}
+
+function refreshQuickHours() {
+  var select = document.getElementById("quick-hour");
+  if (!select) return;
+  var day = currentDay();
+  var slots = day && day.slots ? day.slots : [];
+  var previous = select.value;
+  quickLock = true;
+  select.replaceChildren();
+  if (!slots.length) {
+    var empty = document.createElement("option");
+    empty.value = "";
+    empty.disabled = true;
+    empty.selected = true;
+    empty.textContent = "Usual hours are not on this day yet";
+    select.appendChild(empty);
+    quickLock = false;
+    if (quickLoadedId) loadQuickSlot(null);
     return;
   }
-  var existing = currentDay();
-  var slots = existing ? existing.slots : [];
   for (var i = 0; i < slots.length; i++) {
-    if (slots[i].start === start && slots[i].end === end) {
-      var open = await ask({
-        title: "That hour is already here",
-        message: start + "\u2013" + end + " is already on this day. Open that row instead of adding another?",
-        buttons: [{ value: "cancel", label: "Cancel" }, { value: "ok", label: "Open it", primary: true }]
+    var slot = slots[i];
+    var option = document.createElement("option");
+    option.value = slot.id;
+    option.textContent = slot.start + "\u2013" + slot.end + (slotHasData(slot) ? " \u00b7 has numbers" : "");
+    select.appendChild(option);
+  }
+  var kept = null;
+  for (var k = 0; k < slots.length; k++) if (slots[k].id === previous) kept = slots[k];
+  if (kept) {
+    select.value = kept.id;
+    quickLock = false;
+    return;
+  }
+  var preferred = preferredQuickSlot(day);
+  select.value = preferred.id;
+  quickLock = false;
+  loadQuickSlot(preferred);
+}
+
+function advanceQuick(savedSlot) {
+  renderAll();
+  var day = currentDay();
+  var slots = day && day.slots ? day.slots : [];
+  var index = -1;
+  for (var i = 0; i < slots.length; i++) if (slots[i].id === savedSlot.id) index = i;
+  var next = index >= 0 && index < slots.length - 1 ? slots[index + 1] : null;
+  var label = savedSlot.start + "\u2013" + savedSlot.end;
+  if (!next) {
+    toast("Saved " + label + ".");
+    return;
+  }
+  var select = document.getElementById("quick-hour");
+  quickLock = true;
+  if (select) select.value = next.id;
+  quickLock = false;
+  loadQuickSlot(next);
+  toast("Saved " + label + ".");
+  focusQuickPatients();
+}
+
+async function applyQuickSave(opts) {
+  var advance = !!(opts && opts.advance);
+  var form = readQuickForm();
+  if (!form) return false;
+  var day = currentDay();
+  var slots = day && day.slots ? day.slots : [];
+  var slot = null;
+  if (!slots.length) {
+    if (formIsBlank(form)) {
+      toast("Enter the numbers for this hour first.");
+      return false;
+    }
+    day = ensureDay();
+    day.slots = defaultSlots(state.settings);
+    if (!day.slots.length) {
+      toast("The usual hours could not be added.");
+      return false;
+    }
+    slot = preferredQuickSlot(day);
+  } else {
+    var targetId = opts && opts.slotId ? opts.slotId : (document.getElementById("quick-hour").value || quickLoadedId);
+    slot = findSlot(targetId);
+    if (!slot) {
+      toast("Choose an hour on this day.");
+      return false;
+    }
+    if (sameQuick(form, slot)) {
+      if (advance) advanceQuick(slot);
+      else toast(slot.start + "\u2013" + slot.end + " is already saved.");
+      return true;
+    }
+    if (formIsBlank(form) && !slotHasData(slot)) {
+      toast("Enter the numbers for this hour first.");
+      return false;
+    }
+    if (slotHasData(slot) && !(opts && opts.force)) {
+      var ok = await ask({
+        title: "Replace this hour?",
+        message: "Replace the numbers already saved for " + slot.start + "\u2013" + slot.end + "?",
+        buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Replace", primary: true }]
       });
-      if (open === "ok") focusSlot(slots[i].id);
+      if (ok !== "ok") return false;
+    }
+  }
+  applyFormToSlot(slot, form);
+  scheduleSave();
+  if (advance) advanceQuick(slot);
+  else {
+    quickLoadedId = slot.id;
+    renderAll();
+    toast("Saved " + slot.start + "\u2013" + slot.end + ".");
+  }
+  return true;
+}
+
+async function confirmLeaveQuick() {
+  if (!quickDirty()) return true;
+  var choice = await ask({
+    title: "Save these numbers?",
+    message: "This hour has numbers that are not saved yet.",
+    buttons: [
+      { value: "stay", label: "Stay" },
+      { value: "discard", label: "Don't save" },
+      { value: "save", label: "Save", primary: true }
+    ]
+  });
+  if (choice === "save") return applyQuickSave({ advance: false, force: true, slotId: quickLoadedId || "" });
+  return choice === "discard";
+}
+
+async function onQuickHourChange() {
+  var select = document.getElementById("quick-hour");
+  if (!select) return;
+  var nextId = select.value;
+  if (!nextId || nextId === quickLoadedId) return;
+  if (quickDirty()) {
+    var choice = await ask({
+      title: "Save these numbers?",
+      message: "This hour has numbers that are not saved yet.",
+      buttons: [
+        { value: "stay", label: "Stay" },
+        { value: "discard", label: "Don't save" },
+        { value: "save", label: "Save", primary: true }
+      ]
+    });
+    if (choice === "save") {
+      var saved = await applyQuickSave({ advance: false, force: true, slotId: quickLoadedId });
+      if (!saved) {
+        quickLock = true;
+        select.value = quickLoadedId;
+        quickLock = false;
+        return;
+      }
+    } else if (choice !== "discard") {
+      quickLock = true;
+      select.value = quickLoadedId;
+      quickLock = false;
       return;
     }
   }
-  var overlap = null;
-  for (var s = 0; s < slots.length; s++) {
-    if (start < slots[s].end && end > slots[s].start) overlap = slots[s];
-  }
-  if (overlap) {
-    var allowed = await ask({
-      title: "These times overlap",
-      message: start + "\u2013" + end + " overlaps " + overlap.start + "\u2013" + overlap.end + ". Add it as its own row anyway?",
-      buttons: [{ value: "cancel", label: "Cancel" }, { value: "ok", label: "Add anyway", primary: true }]
-    });
-    if (allowed !== "ok") return;
-  }
-  var day = ensureDay();
-  var slot = blankSlot(start, end);
-  day.slots.push(slot);
-  day.slots.sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : a.end < b.end ? -1 : 1; });
-  scheduleSave();
-  renderAll();
-  var formStart = document.getElementById("add-start");
-  var formEnd = document.getElementById("add-end");
-  if (formStart) formStart.value = end;
-  var following = addMinutes(end, 60);
-  if (formEnd && following) formEnd.value = following;
-  focusSlot(slot.id);
+  loadQuickSlot(findSlot(nextId));
 }
 
 function moveGrid(input, key, shift) {
@@ -3795,16 +4151,55 @@ function rememberFolds() {
   }
 }
 
+function fillPrintValues() {
+  var times = document.querySelectorAll("#stats .slot-time");
+  for (var t = 0; t < times.length; t++) {
+    var clocks = times[t].querySelectorAll("input");
+    if (clocks.length < 2) continue;
+    var when = times[t].querySelector(".print-time");
+    if (!when) {
+      when = document.createElement("span");
+      when.className = "print-time";
+      when.setAttribute("aria-hidden", "true");
+      times[t].appendChild(when);
+    }
+    when.textContent = clocks[0].value + "\u2013" + clocks[1].value;
+  }
+  var inputs = document.querySelectorAll("#stats input.num, #stats input.notes");
+  for (var i = 0; i < inputs.length; i++) {
+    var input = inputs[i];
+    var cell = input.parentElement;
+    if (!cell) continue;
+    var label = cell.querySelector(".print-val");
+    if (!label) {
+      label = document.createElement("span");
+      label.className = "print-val";
+      label.setAttribute("aria-hidden", "true");
+      cell.appendChild(label);
+    }
+    label.textContent = input.value;
+  }
+}
+
+function clearPrintValues() {
+  var nodes = document.querySelectorAll("#stats .print-time, #stats .print-val");
+  for (var i = 0; i < nodes.length; i++) nodes[i].remove();
+}
+
 function bind() {
   rememberFolds();
+  buildQuickKeys();
   window.addEventListener("beforeprint", function () {
     var folds = document.querySelectorAll("details.fold");
     for (var i = 0; i < folds.length; i++) {
       folds[i].dataset.wasOpen = folds[i].open ? "1" : "0";
-      folds[i].open = true;
     }
+    var hours = document.getElementById("fold-hours");
+    if (hours) hours.open = true;
+    fillPrintValues();
   });
   window.addEventListener("afterprint", function () {
+    clearPrintValues();
     var folds = document.querySelectorAll("details.fold");
     for (var i = 0; i < folds.length; i++) {
       if (folds[i].dataset.wasOpen === "0") folds[i].open = false;
@@ -3812,7 +4207,41 @@ function bind() {
   });
   document.getElementById("add-record").addEventListener("submit", function (event) {
     event.preventDefault();
-    addSpecificRecord(document.getElementById("add-start").value, document.getElementById("add-end").value);
+    if (quickBusy) return;
+    quickBusy = true;
+    applyQuickSave({ advance: true }).then(function () {
+      quickBusy = false;
+    }, function () {
+      quickBusy = false;
+    });
+  });
+  document.getElementById("add-record").addEventListener("input", function (event) {
+    var input = event.target;
+    if (!input.classList || !input.classList.contains("quick-num")) return;
+    var cleaned = String(input.value || "").replace(/\D/g, "").slice(0, 5);
+    if (input.value !== cleaned) input.value = cleaned;
+  });
+  document.getElementById("add-record").addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && event.target.tagName === "SELECT") {
+      event.preventDefault();
+      return;
+    }
+    if (event.key !== "Enter" || event.target.tagName === "BUTTON" || event.target.tagName === "SELECT") return;
+    var fields = Array.prototype.slice.call(event.currentTarget.querySelectorAll("input"));
+    var index = fields.indexOf(event.target);
+    if (index < 0 || index >= fields.length - 1) return;
+    event.preventDefault();
+    fields[index + 1].focus();
+    if (fields[index + 1].select) fields[index + 1].select();
+  });
+  document.getElementById("quick-hour").addEventListener("change", function () {
+    if (quickLock || quickBusy) return;
+    quickBusy = true;
+    onQuickHourChange().then(function () {
+      quickBusy = false;
+    }, function () {
+      quickBusy = false;
+    });
   });
   document.getElementById("top-prev").addEventListener("click", function () { stepDay(-1); });
   document.getElementById("top-next").addEventListener("click", function () { stepDay(1); });
