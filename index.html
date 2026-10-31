@@ -224,6 +224,10 @@
   .save.error .dot { background: var(--danger); }
   .save.error { color: var(--danger); }
   .toolbar, .summary { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 16px; }
+  .date-field { display: flex; }
+  .sheet-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sheet-more { margin: 0 16px 6px; color: var(--muted); font-size: 0.88rem; }
+  .sheet-more-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .date-stepper { display: flex; align-items: center; gap: 4px; }
   .btn, .date-stepper button, .icon-btn {
     min-height: 40px;
@@ -508,6 +512,18 @@
   .ov-table td.ov-notes { max-width: 360px; white-space: normal; vertical-align: top; }
   .ov-note-line { display: block; margin: 4px 0; line-height: 1.35; }
   .ov-when { margin-right: 6px; color: var(--muted); font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ov-delete {
+    display: block;
+    margin-top: 2px;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .ov-table td:first-child, .ov-table th:first-child { position: sticky; left: 0; z-index: 2; background: var(--surface); }
   .ov-empty { margin: 0; color: var(--muted); }
   .star-sticker {
     position: absolute;
@@ -523,12 +539,46 @@
   legend { padding: 0 6px; font-size: 0.85rem; }
   .stack-label { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
   @media (max-width: 720px) {
-    .scroll-hint { display: block; }
+    .scroll-hint { display: block; margin: 0 12px 4px; }
     .theme-choices, .row-2 { grid-template-columns: 1fr 1fr; }
-    h1 { font-size: 1.15rem; }
-    .top { flex-direction: column; }
+    .app { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+    .top { align-items: center; padding: 10px 12px 2px; }
+    .eyebrow, #report-title { display: none; }
+    h1 { font-size: 1.05rem; }
+    .save { min-height: 32px; font-size: 0.75rem; }
+    .day-nav { gap: 6px; padding: 2px 8px 4px; }
+    .day-nav #day-line { min-width: 0; flex: 1; font-size: 0.95rem; }
+    .view-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 6px; }
+    .view-btn { width: 100%; }
+    .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 2px 12px 6px; }
+    .date-field, .date-field input { width: 100%; min-width: 0; }
+    .sheet-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .sheet-actions .btn { width: 100%; padding: 0 8px; }
+    .summary { flex-wrap: nowrap; overflow-x: auto; padding: 2px 12px 6px; -webkit-overflow-scrolling: touch; }
+    .chip { flex: 0 0 auto; }
+    .sheet-more { margin-left: 12px; margin-right: 12px; }
+    .help { display: none; }
+    .table-card { margin: 0 8px 8px; }
+    .table-wrap { -webkit-overflow-scrolling: touch; }
+    .c-time { min-width: 92px; }
+    .slot-time { flex-direction: column; gap: 0; }
+    .c-single { min-width: 68px; }
+    .c-split { min-width: 42px; }
+    .c-notes { min-width: 120px; }
+    .status-bar { padding: 0 12px 8px; }
+    .ov-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 12px 0; }
+    .ov-filters .field, .ov-filters input { width: 100%; min-width: 0; }
+    .ov-filters .field:first-child, .ov-ranges { grid-column: 1 / -1; }
+    .ov-ranges { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .ov-ranges .btn { width: 100%; padding: 0 4px; font-size: 0.8rem; }
+    .ov-cards { grid-template-columns: 1fr 1fr; padding: 8px 12px 4px; }
+    .ov-card { padding: 8px 10px; }
+    .ov-card strong { font-size: 1.12rem; }
+    .ov-grid, .ov-history { padding-left: 12px; padding-right: 12px; }
     .ov-grid { grid-template-columns: 1fr; }
-    .ov-filters input[type="search"] { min-width: 0; width: 100%; }
+    #ov-daily { height: 160px; }
+    .ov-table-wrap { max-height: none; }
+    .ov-blurb { margin-left: 12px; margin-right: 12px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -569,21 +619,23 @@
   <div id="storage-error" class="storage-error" hidden></div>
   <div id="sheet" class="sheet">
   <div class="toolbar no-print">
-    <div class="date-stepper">
-      <button type="button" id="prev-day" aria-label="Previous day">‹</button>
-      <label class="date-field"><span class="sr-only">Date</span><input type="date" id="work-date"></label>
-      <button type="button" id="next-day" aria-label="Next day">›</button>
-    </div>
+    <label class="date-field"><span class="sr-only">Date</span><input type="date" id="work-date"></label>
     <button type="button" class="btn" id="today-btn">Today</button>
-    <button type="button" class="btn" id="now-btn">This hour</button>
-    <button type="button" class="btn" id="add-hour">Add hour</button>
-    <button type="button" class="btn" id="copy-prev">Copy previous day</button>
-    <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
-    <button type="button" class="btn" id="open-days">Days</button>
-    <button type="button" class="btn" id="open-export">Export</button>
-    <button type="button" class="btn" id="print-btn">Print</button>
+    <div class="sheet-actions">
+      <button type="button" class="btn" id="open-export">Export</button>
+      <button type="button" class="btn" id="print-btn">Print</button>
+      <button type="button" class="btn" id="sheet-backup">Backup</button>
+    </div>
   </div>
   <div class="summary" id="summary" aria-live="polite" aria-label="Day totals"></div>
+  <details class="sheet-more no-print">
+    <summary>More for this day</summary>
+    <div class="sheet-more-actions">
+      <button type="button" class="btn" id="add-hour">Add hour</button>
+      <button type="button" class="btn" id="now-btn">This hour</button>
+      <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
+    </div>
+  </details>
   <details class="help no-print">
     <summary>How to record</summary>
     <p>Each row is one hour. Patients is the number of people. Acute is the number of acute scripts. Under Chronic, each number is how many chronic scripts had that many items. 9+ means 9 or more. Under ARV, 1, 2 and 3 are how many ARV scripts had that many items. Scripts is acute + chronic + ARV. Arrow keys move across the grid. Enter moves down. Numbers save on this device as you type. Overview charts every saved day and can search dates, weekdays, notes, and totals.</p>
@@ -620,7 +672,7 @@
         <button type="button" class="btn" data-ov-range="7" aria-pressed="false">7 days</button>
         <button type="button" class="btn" data-ov-range="30" aria-pressed="false">30 days</button>
         <button type="button" class="btn" data-ov-range="90" aria-pressed="false">90 days</button>
-        <button type="button" class="btn is-on" data-ov-range="all" aria-pressed="true">All saved days</button>
+        <button type="button" class="btn is-on" data-ov-range="all" aria-pressed="true" aria-label="All saved days">All</button>
       </div>
     </div>
     <p id="ov-range-error" class="help-text ov-note" hidden>From is after To.</p>
@@ -1645,7 +1697,13 @@ function renderOverview() {
     open.dataset.openDay = item.date;
     open.textContent = item.label;
     open.setAttribute("aria-label", "Open " + item.label + " on the sheet");
-    dateCell.appendChild(open);
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "ov-delete";
+    remove.dataset.deleteDay = item.date;
+    remove.textContent = "Delete";
+    remove.setAttribute("aria-label", "Delete " + item.label);
+    dateCell.append(open, remove);
     rowEl.appendChild(dateCell);
     ["patients", "acute", "chronic", "arv", "scripts"].forEach(function (field) {
       var cell = document.createElement("td");
@@ -3529,21 +3587,23 @@ function showStorageError(err) {
 function bind() {
   document.getElementById("top-prev").addEventListener("click", function () { stepDay(-1); });
   document.getElementById("top-next").addEventListener("click", function () { stepDay(1); });
-  document.getElementById("prev-day").addEventListener("click", function () { stepDay(-1); });
-  document.getElementById("next-day").addEventListener("click", function () { stepDay(1); });
   document.getElementById("today-btn").addEventListener("click", function () { setDate(localISODate(new Date())); });
   document.getElementById("now-btn").addEventListener("click", function () { jumpToNow(); });
   document.getElementById("work-date").addEventListener("change", function (event) {
     if (event.target.value) setDate(event.target.value);
   });
   document.getElementById("add-hour").addEventListener("click", addHour);
-  document.getElementById("copy-prev").addEventListener("click", copyPrevious);
   document.getElementById("empty-copy").addEventListener("click", copyPrevious);
   document.getElementById("empty-start").addEventListener("click", startFresh);
   document.getElementById("clear-numbers").addEventListener("click", clearNumbers);
-  document.getElementById("open-days").addEventListener("click", openDays);
   document.getElementById("open-export").addEventListener("click", openExport);
   document.getElementById("print-btn").addEventListener("click", function () { window.print(); });
+  document.getElementById("sheet-backup").addEventListener("click", function () {
+    runBackup({ auto: false }).catch(function (err) {
+      console.error(err);
+      toast("Backup did not finish.");
+    });
+  });
   document.getElementById("open-settings").addEventListener("click", openSettings);
   document.getElementById("view-sheet").addEventListener("click", function () { showView("sheet"); });
   document.getElementById("view-overview").addEventListener("click", function () { showView("overview"); });
@@ -3568,6 +3628,8 @@ function bind() {
   document.getElementById("ov-table").addEventListener("click", function (event) {
     var el = eventEl(event);
     if (!el || !el.closest) return;
+    var removeDay = el.closest("[data-delete-day]");
+    if (removeDay) { deleteDay(removeDay.dataset.deleteDay); return; }
     var sortBtn = el.closest("[data-ov-sort]");
     if (sortBtn) {
       var key = sortBtn.dataset.ovSort;
