@@ -58,6 +58,7 @@
     --cell-chronic: #f4f8fb;
     --cell-arv: #fbf8f2;
     --cell-scripts: #f7f8ef;
+    --sub-acute: #e5f4f2;
     --sub-chronic: #e7f0f8;
     --sub-arv: #f8f1e3;
     --banner: #e8f4f2;
@@ -91,6 +92,7 @@
     --cell-chronic: #1a2836;
     --cell-arv: #2c261c;
     --cell-scripts: #26291c;
+    --sub-acute: #1c3330;
     --sub-chronic: #24384c;
     --sub-arv: #3a3120;
     --banner: #1a2e2b;
@@ -125,6 +127,7 @@
     --cell-chronic: #f8f3ff;
     --cell-arv: #fff8ec;
     --cell-scripts: #f3fff7;
+    --sub-acute: #ffe0ea;
     --sub-chronic: #f4ebff;
     --sub-arv: #fff1d6;
     --banner: #ffe9f1;
@@ -323,8 +326,23 @@
   th.tone-arv { background: var(--th-arv); }
   th.tone-scripts { background: var(--th-scripts); }
   th.c-notes { background: var(--th-time); }
+  th.sub.tone-acute { background: var(--sub-acute); color: var(--sub-fg); }
   th.sub.tone-chronic { background: var(--sub-chronic); color: var(--sub-fg); }
   th.sub.tone-arv { background: var(--sub-arv); color: var(--sub-fg); }
+  .count-tile {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0 2px;
+    text-align: center;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    color: inherit;
+  }
+  .count-tile:focus { background: var(--input); border-color: var(--accent); }
+  .count-tile.has-value { font-weight: 700; }
   .c-time { width: 104px; min-width: 104px; max-width: 112px; }
   .c-single { min-width: 84px; }
   .c-split { min-width: 48px; }
@@ -407,10 +425,24 @@
     box-shadow: var(--shadow);
     padding: 0;
   }
-  dialog::backdrop { background: rgba(16, 24, 22, 0.48); }
+  dialog:modal { overscroll-behavior: contain; }
+  dialog::backdrop {
+    background: rgba(16, 24, 22, 0.48);
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
   #settings { width: min(560px, calc(100vw - 24px)); }
-  #days, #export { width: min(480px, calc(100vw - 24px)); }
-  #confirm { width: min(440px, calc(100vw - 24px)); }
+  #days, #export, #book-edit { width: min(480px, calc(100vw - 24px)); }
+  #confirm, #cell-edit { width: min(440px, calc(100vw - 24px)); }
+  #cell-edit form, #book-edit form { margin: 0; }
+  #cell-edit form { padding: 18px; }
+  #cell-edit input {
+    font-size: 16px;
+    min-height: 44px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  #settings .summary { padding: 2px 0 4px; }
   #settings[open] {
     display: flex;
     flex-direction: column;
@@ -579,7 +611,21 @@
     line-height: 1;
     box-shadow: var(--shadow);
   }
-  body[data-view="overview"] .fab { display: none; }
+  body[data-view="overview"] .fab,
+  body[data-view="book"] .fab { display: none; }
+  .book { padding: 4px 12px 28px; }
+  .book-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 4px 0 10px;
+  }
+  .book-head h2 { margin: 0 0 4px; font-size: 1.05rem; }
+  .book-head .help-text { margin: 0; max-width: 62ch; }
+  .book-count { margin: 0 0 8px; color: var(--muted); font-size: 0.85rem; }
+  .book-open { font-weight: 700; color: var(--accent); }
+  .book-wait { color: var(--muted); }
   .quick-layer { position: fixed; inset: 0; z-index: 60; }
   .quick-backdrop { position: absolute; inset: 0; border: 0; background: color-mix(in srgb, #000 40%, transparent); }
   .quick-panel {
@@ -777,7 +823,8 @@
     .day-nav { gap: 6px; padding: 2px 8px 4px; }
     .day-nav-label { min-width: 0; flex: 1; }
     .day-nav #day-line { font-size: 0.95rem; }
-    .view-nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 12px 6px; }
+    .view-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 6px; }
+    .book-head { flex-direction: column; }
     .view-btn { padding: 0 6px; font-size: 0.85rem; }
     .view-btn { width: 100%; }
     .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 2px 12px 6px; }
@@ -811,7 +858,8 @@
     .ov-grid { grid-template-columns: 1fr; }
     #ov-daily { height: 160px; }
     .ov-table-wrap { max-height: none; overflow-x: auto; overflow-y: clip; }
-    body[data-view="overview"] .app { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+    body[data-view="overview"] .app,
+    body[data-view="book"] .app { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
     .ov-blurb { margin-left: 12px; margin-right: 12px; }
   }
   @media (min-width: 721px) and (max-width: 1199px) {
@@ -879,7 +927,6 @@
   body.is-tablet .help,
   body.is-tablet .scroll-hint,
   body.is-tablet .status-bar,
-  body.is-tablet #summary,
   body.is-tablet #fold-tools > summary,
   body.is-tablet #fold-hours > summary,
   body.is-tablet .table-full { display: none; }
@@ -1031,14 +1078,15 @@
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
-    .stats thead tr:first-child th:first-child { width: 11%; }
-    .stats thead tr:first-child th.c-single { width: 6.5%; }
-    .stats thead tr:first-child th.tone-chronic { width: 36%; }
-    .stats thead tr:first-child th.tone-arv { width: 12%; }
-    .stats thead tr:first-child th.c-scripts { width: 6.5%; }
-    .stats thead tr:first-child th.c-notes { width: 21.5%; }
+    .stats thead tr:first-child th:first-child { width: 9%; }
+    .stats thead tr:first-child th.tone-patients { width: 6%; }
+    .stats thead tr:first-child th.tone-acute { width: 22%; }
+    .stats thead tr:first-child th.tone-chronic { width: 34%; }
+    .stats thead tr:first-child th.tone-arv { width: 7%; }
+    .stats thead tr:first-child th.c-scripts { width: 7%; }
+    .stats thead tr:first-child th.c-notes { width: 15%; }
     .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; }
-    #stats input, .time-dash { display: none !important; }
+    #stats input, #stats .count-tile, .time-dash { display: none !important; }
     .print-time, .print-val { display: inline; font-size: 10pt; font-variant-numeric: tabular-nums; }
     .c-notes .print-val { display: block; text-align: left; white-space: normal; word-break: break-word; }
     .stats tr, .stats thead { break-inside: avoid; page-break-inside: avoid; }
@@ -1086,6 +1134,7 @@
     <button type="button" class="btn view-btn" id="view-sheet" aria-pressed="true">Sheet</button>
     <button type="button" class="btn view-btn" id="view-overview" aria-pressed="false">Overview</button>
     <button type="button" class="btn view-btn" id="tablet-mode" aria-pressed="false">Tablet</button>
+    <button type="button" class="btn view-btn" id="view-book" aria-pressed="false">Book</button>
   </nav>
   <div id="storage-error" class="storage-error" hidden></div>
   <div id="sheet" class="sheet">
@@ -1104,7 +1153,6 @@
       <button type="button" class="btn" id="sheet-backup">Backup</button>
     </div>
   </div>
-  <div class="summary" id="summary" aria-live="polite" aria-label="Day totals"></div>
   <div class="day-extra no-print">
     <button type="button" class="btn" id="add-hour">Add hour</button>
     <button type="button" class="btn" id="now-btn">This hour</button>
@@ -1112,9 +1160,9 @@
   </div>
   <details class="help no-print">
     <summary>How to record</summary>
-    <p>Each row is one hour. Type the counts in the grid, or tap + and save the hour. Scripts is acute + chronic + ARV. 9+ means 9 or more items.</p>
+    <p>Each row is one hour. Tap a count to type it or add 1. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
   </details>
-  <p class="scroll-hint no-print">Swipe sideways for chronic, ARV, scripts and notes.</p>
+  <p class="scroll-hint no-print">Swipe sideways for acute, chronic, scripts and notes.</p>
   </details>
   <div class="hours-pane">
   <details class="fold" id="fold-hours" open>
@@ -1203,7 +1251,7 @@
       </section>
       <section class="ov-panel" id="ov-panel-chronic" aria-labelledby="ov-chronic-title">
         <h2 id="ov-chronic-title">Chronic scripts by items</h2>
-        <p class="help-text">9+ means 9 or more items on the script. ARV item counts are under Script mix.</p>
+        <p class="help-text">9+ means 9 or more items on the script. Acute item counts are under Script mix.</p>
         <div id="ov-chronic"></div>
       </section>
     </div>
@@ -1230,6 +1278,32 @@
       </div>
     </div>
     </details>
+  </section>
+  <section id="book" class="book no-print" hidden aria-labelledby="book-title">
+    <div class="book-head">
+      <div>
+        <h2 id="book-title">Out of stock book</h2>
+        <p class="help-text">Write a line when an item is out of stock and a patient is waiting. Collected is the date they collected it. Leave Collected empty until they do. Type the item for now. A medicine list can come later.</p>
+      </div>
+      <button type="button" class="btn primary" id="book-add">Add line</button>
+    </div>
+    <p id="book-count" class="book-count"></p>
+    <div class="ov-table-wrap">
+      <table class="ov-table book-table">
+        <caption class="sr-only">Out of stock follow-up</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Patient name</th>
+            <th scope="col">Contact no.</th>
+            <th scope="col">Item</th>
+            <th scope="col">Collected</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="book-body"></tbody>
+      </table>
+    </div>
   </section>
   <div id="backup-banner" class="backup-banner" hidden>
     <p id="backup-banner-text">Daily backup ready. A full history file should be in Downloads. If it is not there, tap Save.</p>
@@ -1262,17 +1336,17 @@
         <label class="field">Patients
           <input id="quick-patients" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="patients" aria-label="Patients">
         </label>
-        <label class="field">Acute
-          <input id="quick-acute" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="acute" aria-label="Acute scripts">
+        <label class="field">ARV
+          <input id="quick-arv" class="quick-num" type="text" inputmode="numeric" maxlength="5" autocomplete="off" data-group="arv" aria-label="ARV scripts">
         </label>
       </div>
       <fieldset class="quick-set">
-        <legend>Chronic items</legend>
-        <div class="quick-keys" id="quick-chronic"></div>
+        <legend>Acute items</legend>
+        <div class="quick-keys" id="quick-acute"></div>
       </fieldset>
       <fieldset class="quick-set">
-        <legend>ARV items</legend>
-        <div class="quick-keys" id="quick-arv"></div>
+        <legend>Chronic items</legend>
+        <div class="quick-keys" id="quick-chronic"></div>
       </fieldset>
       <label class="field">Note
         <input type="text" id="quick-note" maxlength="500" autocomplete="off" aria-label="Note">
@@ -1288,6 +1362,11 @@
     <button type="button" class="btn" id="settings-close">Close</button>
   </div>
   <div class="dialog-scroll">
+    <section class="settings-section">
+      <h3>This day</h3>
+      <div class="summary" id="summary" aria-live="polite" aria-label="Day totals"></div>
+      <p class="help-text" id="settings-day-totals">Totals for the day open on the sheet.</p>
+    </section>
     <section class="settings-section">
       <h3>Appearance</h3>
       <div class="theme-choices" role="radiogroup" aria-label="Theme">
@@ -1417,6 +1496,54 @@
   </form>
 </dialog>
 
+<dialog id="cell-edit" aria-labelledby="cell-edit-title">
+  <form method="dialog" id="cell-edit-form">
+    <h2 id="cell-edit-title">Count</h2>
+    <p id="cell-edit-when" class="help-text"></p>
+    <label class="field">Count
+      <input id="cell-edit-value" type="text" inputmode="numeric" maxlength="5" autocomplete="off" enterkeyhint="done" autofocus>
+    </label>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="cell-edit-plus">+1</button>
+      <button type="submit" class="btn primary" value="save">Save</button>
+      <button type="submit" class="btn" value="">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="book-edit" aria-labelledby="book-edit-title">
+  <form method="dialog" id="book-edit-form">
+    <div class="dialog-top">
+      <h2 id="book-edit-title">Book line</h2>
+      <button type="button" class="btn" id="book-edit-close">Close</button>
+    </div>
+    <div class="dialog-body">
+      <div class="row-2">
+        <label class="field">Date
+          <input type="date" id="book-date" required>
+        </label>
+        <label class="field">Collected
+          <input type="date" id="book-collected">
+        </label>
+      </div>
+      <label class="field">Patient name
+        <input type="text" id="book-name" maxlength="120" autocomplete="name">
+      </label>
+      <label class="field">Contact no.
+        <input type="tel" id="book-contact" maxlength="40" autocomplete="tel" inputmode="tel">
+      </label>
+      <label class="field">Item
+        <input type="text" id="book-item" maxlength="160" autocomplete="off">
+      </label>
+      <p class="help-text">Collected stays empty until the patient collects the item.</p>
+      <div class="dialog-actions">
+        <button type="submit" class="btn primary" value="save">Save</button>
+        <button type="submit" class="btn" value="" formnovalidate>Cancel</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
 <script id="app">
 "use strict";
 
@@ -1425,23 +1552,24 @@
    days    — one record per YYYY-MM-DD
    kv      — settings
    backups — the last 7 to 14 full JSON snapshots
-   Schema 1. New columns do not need a version bump: missing keys are filled
-   on load. Bump DB_VERSION only when a stored shape must be rewritten. */
+   book    — out-of-stock follow-up lines
+   Schema 2 adds the book store. Missing day keys are filled on load.
+   Bump DB_VERSION only when a stored shape must be rewritten. */
 
 var DB_NAME = "montebello-stats";
-var DB_VERSION = 1;
+var DB_VERSION = 2;
 var SESSION_DATE_KEY = "montebello-stats-date";
 var THEME_KEY = "montebello-stats-theme";
 
-/* Paper columns. Chronic "9+" means 9 or more items.
+/* Paper columns. Acute "5+" means 5 or more items. Chronic "9+" means 9 or more.
    Add a group here if the original sheet had another column.
    type "single" is one number. type "split" is one column per key.
    countsAsScripts adds that group into the Scripts total. */
 var COLUMN_GROUPS = [
   { id: "patients", label: "Patients", short: "Patients", type: "single", tone: "patients", countsAsScripts: false, hint: "Number of patients in this hour" },
-  { id: "acute", label: "Acute scripts", short: "Acute", type: "single", tone: "acute", countsAsScripts: true, hint: "Number of acute scripts" },
+  { id: "acute", label: "Acute scripts", short: "Acute", type: "split", tone: "acute", countsAsScripts: true, keys: ["1", "2", "3", "4", "5+"], hint: "Acute scripts by how many items are on the script. 5+ means 5 or more." },
   { id: "chronic", label: "Chronic scripts", short: "Chronic", type: "split", tone: "chronic", countsAsScripts: true, keys: ["1", "2", "3", "4", "5", "6", "7", "8", "9+"], hint: "Chronic scripts by how many items are on the script. 9+ means 9 or more." },
-  { id: "arv", label: "ARV scripts", short: "ARV", type: "split", tone: "arv", countsAsScripts: true, keys: ["1", "2", "3"], hint: "ARV scripts by how many items are on the script." }
+  { id: "arv", label: "ARV scripts", short: "ARV", type: "single", tone: "arv", countsAsScripts: true, hint: "Number of ARV scripts" }
 ];
 
 var GROUP_BY_ID = Object.create(null);
@@ -1458,8 +1586,11 @@ var state = {
   dirty: false,
   pendingBackup: null,
   backupRecords: [],
-  backupLock: false
+  backupLock: false,
+  book: []
 };
+var cellEdit = { slotId: "", groupId: "", key: "" };
+var bookEditId = "";
 var tombstones = new Set();
 var saveTimer = 0;
 var settingsTimer = 0;
@@ -1649,22 +1780,44 @@ function defaultSlots(settings) {
   return slots;
 }
 
+function sumStored(from) {
+  if (from == null || from === "") return null;
+  if (typeof from !== "object") return sanitizeNum(from);
+  var list = Array.isArray(from) ? from : Object.keys(from).map(function (key) { return from[key]; });
+  var any = false;
+  var total = 0;
+  for (var i = 0; i < list.length; i++) {
+    var n = sanitizeNum(list[i]);
+    if (n == null) continue;
+    any = true;
+    total += n;
+  }
+  return any ? Math.min(99999, total) : null;
+}
+
+function assignSplit(bag, group, from) {
+  if (typeof from === "number" || typeof from === "string") {
+    /* Older days stored one acute number. Keep it on key "1" so the script total survives. */
+    bag[group.keys[0]] = sanitizeNum(from);
+    return;
+  }
+  if (Array.isArray(from)) {
+    for (var a = 0; a < group.keys.length; a++) bag[group.keys[a]] = sanitizeNum(from[a]);
+    return;
+  }
+  if (from && typeof from === "object") {
+    for (var k = 0; k < group.keys.length; k++) bag[group.keys[k]] = sanitizeNum(from[group.keys[k]]);
+  }
+}
+
 function normalizeSlot(raw) {
   if (!raw || typeof raw !== "object") return null;
   var values = blankValues();
   var source = raw.values && typeof raw.values === "object" ? raw.values : raw;
   for (var i = 0; i < COLUMN_GROUPS.length; i++) {
     var group = COLUMN_GROUPS[i];
-    if (group.type === "single") {
-      values[group.id] = sanitizeNum(source[group.id]);
-    } else {
-      var from = source[group.id];
-      if (Array.isArray(from)) {
-        for (var a = 0; a < group.keys.length; a++) values[group.id][group.keys[a]] = sanitizeNum(from[a]);
-      } else if (from && typeof from === "object") {
-        for (var k = 0; k < group.keys.length; k++) values[group.id][group.keys[k]] = sanitizeNum(from[group.keys[k]]);
-      }
-    }
+    if (group.type === "single") values[group.id] = sumStored(source[group.id]);
+    else assignSplit(values[group.id], group, source[group.id]);
   }
   var start = validTime(raw.start) || "07:00";
   var end = validTime(raw.end) || addMinutes(start, 60) || "08:00";
@@ -1806,17 +1959,17 @@ function hourLabel(start) {
 
 function emptyOverview(invalidRange) {
   var chronicKeys = {};
-  var arvKeys = {};
+  var acuteKeys = {};
   var ck = GROUP_BY_ID.chronic.keys;
-  var ak = GROUP_BY_ID.arv.keys;
+  var ak = GROUP_BY_ID.acute.keys;
   for (var i = 0; i < ck.length; i++) chronicKeys[ck[i]] = 0;
-  for (var j = 0; j < ak.length; j++) arvKeys[ak[j]] = 0;
+  for (var j = 0; j < ak.length; j++) acuteKeys[ak[j]] = 0;
   return {
     invalidRange: !!invalidRange,
     rows: [],
     hours: [],
     chronicKeys: chronicKeys,
-    arvKeys: arvKeys,
+    acuteKeys: acuteKeys,
     sum: { days: 0, patients: 0, acute: 0, chronic: 0, arv: 0, scripts: 0 },
     busiestDay: null,
     busiestHour: null
@@ -1881,8 +2034,8 @@ function collectOverview(daysMap, filters) {
       hourMap[label].scripts += scriptCount;
       var chronic = GROUP_BY_ID.chronic.keys;
       for (var c = 0; c < chronic.length; c++) report.chronicKeys[chronic[c]] += num(slot.values.chronic[chronic[c]]);
-      var arv = GROUP_BY_ID.arv.keys;
-      for (var a = 0; a < arv.length; a++) report.arvKeys[arv[a]] += num(slot.values.arv[arv[a]]);
+      var acute = GROUP_BY_ID.acute.keys;
+      for (var a = 0; a < acute.length; a++) report.acuteKeys[acute[a]] += num(slot.values.acute[acute[a]]);
     }
     report.rows.push({
       date: day.date,
@@ -2345,24 +2498,29 @@ function renderOverview() {
   } else {
     daily.appendChild(dailyChart(report.rows, cat === "all" ? "both" : cat));
     var scripts = report.sum.scripts;
-    if (cat !== "arv") {
+    if (cat === "arv") {
+      mix.appendChild(hBars([
+        { label: "ARV", value: report.sum.arv, cls: "bar-arv", hint: report.sum.arv + " ARV scripts" }
+      ], "ARV scripts."));
+    } else {
       mix.appendChild(hBars([
         { label: "Acute", value: report.sum.acute, cls: "bar-acute", suffix: percentSuffix(report.sum.acute, scripts), hint: report.sum.acute + " acute scripts" },
         { label: "Chronic", value: report.sum.chronic, cls: "bar-chronic", suffix: percentSuffix(report.sum.chronic, scripts), hint: report.sum.chronic + " chronic scripts" },
         { label: "ARV", value: report.sum.arv, cls: "bar-arv", suffix: percentSuffix(report.sum.arv, scripts), hint: report.sum.arv + " ARV scripts" }
       ], "Script mix. Acute " + report.sum.acute + ", chronic " + report.sum.chronic + ", ARV " + report.sum.arv + "."));
     }
-    if (cat === "all" || cat === "arv") {
-      if (cat !== "arv") {
-        var arvHeading = document.createElement("h3");
-        arvHeading.className = "ov-sub";
-        arvHeading.textContent = "ARV by items";
-        mix.appendChild(arvHeading);
+    if (cat === "all" || cat === "acute") {
+      if (cat !== "acute") {
+        var acuteHeading = document.createElement("h3");
+        acuteHeading.className = "ov-sub";
+        acuteHeading.textContent = "Acute by items";
+        mix.appendChild(acuteHeading);
       }
-      var arvItems = GROUP_BY_ID.arv.keys.map(function (key) {
-        return { label: key, value: report.arvKeys[key], cls: "bar-arv", hint: report.arvKeys[key] + " ARV scripts with " + key + (key === "1" ? " item" : " items") };
+      var acuteItems = GROUP_BY_ID.acute.keys.map(function (key) {
+        var label = key === "5+" ? "5 or more" : key + (key === "1" ? " item" : " items");
+        return { label: key, value: report.acuteKeys[key], cls: "bar-acute", hint: report.acuteKeys[key] + " acute scripts with " + label };
       });
-      mix.appendChild(hBars(arvItems, "ARV scripts by item count."));
+      mix.appendChild(hBars(acuteItems, "Acute scripts by how many items are on the script. 5+ means 5 or more."));
     }
     hours.appendChild(hBars(report.hours.map(function (hour) {
       return {
@@ -2449,12 +2607,12 @@ function renderOverview() {
 }
 
 function showView(name) {
-  var next = name === "overview" ? "overview" : "sheet";
+  var next = name === "overview" ? "overview" : name === "book" ? "book" : "sheet";
   var changed = next !== state.view || document.body.classList.contains("is-tablet");
   if (document.body.classList.contains("is-tablet")) setTabletMode(false);
   state.view = next;
   try { sessionStorage.setItem("montebello-stats-view", state.view); } catch (err) {}
-  if (next === "overview") {
+  if (next !== "sheet") {
     var layer = document.getElementById("quick-layer");
     if (layer && !layer.hidden) setQuickOpen(false);
   }
@@ -2528,6 +2686,237 @@ function isBackupDue(settings, now) {
   return last.getTime() < threshold.getTime();
 }
 
+function normalizeBook(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  var date = typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date) ? raw.date : "";
+  if (!date) return null;
+  var collected = typeof raw.collected === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.collected) ? raw.collected : "";
+  return {
+    id: typeof raw.id === "string" && raw.id ? raw.id : uid(),
+    date: date,
+    name: typeof raw.name === "string" ? raw.name.trim().slice(0, 120) : "",
+    contact: typeof raw.contact === "string" ? raw.contact.trim().slice(0, 40) : "",
+    item: typeof raw.item === "string" ? raw.item.trim().slice(0, 160) : "",
+    collected: collected,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString()
+  };
+}
+
+function bookLinesForBackup() {
+  var lines = [];
+  var source = state.book || [];
+  for (var i = 0; i < source.length; i++) {
+    var line = normalizeBook(source[i]);
+    if (line) lines.push(line);
+  }
+  lines.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  return lines;
+}
+
+function findBook(id) {
+  for (var i = 0; i < state.book.length; i++) if (state.book[i].id === id) return state.book[i];
+  return null;
+}
+
+function renderBook() {
+  var body = document.getElementById("book-body");
+  var count = document.getElementById("book-count");
+  if (!body) return;
+  var lines = (state.book || []).slice().sort(function (a, b) {
+    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+    return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+  });
+  var waiting = 0;
+  for (var w = 0; w < lines.length; w++) if (!lines[w].collected) waiting++;
+  if (count) {
+    if (!lines.length) count.textContent = "No lines yet.";
+    else count.textContent = waiting + " waiting · " + (lines.length - waiting) + " collected";
+  }
+  body.replaceChildren();
+  if (!lines.length) {
+    var empty = document.createElement("tr");
+    var cell = document.createElement("td");
+    cell.colSpan = 6;
+    cell.className = "ov-empty";
+    cell.textContent = "No lines yet. Add one when something is out of stock.";
+    empty.appendChild(cell);
+    body.appendChild(empty);
+    return;
+  }
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var tr = document.createElement("tr");
+    function textCell(text, extra) {
+      var td = document.createElement("td");
+      td.textContent = text;
+      if (extra) td.className = extra;
+      return td;
+    }
+    tr.appendChild(textCell(formatDate(line.date)));
+    var nameCell = document.createElement("td");
+    var open = document.createElement("button");
+    open.type = "button";
+    open.className = "book-open";
+    open.dataset.bookOpen = line.id;
+    open.textContent = line.name || "No name";
+    open.setAttribute("aria-label", "Edit " + (line.name || "book line"));
+    nameCell.appendChild(open);
+    tr.appendChild(nameCell);
+    tr.appendChild(textCell(line.contact || ""));
+    tr.appendChild(textCell(line.item || ""));
+    tr.appendChild(textCell(line.collected ? formatDate(line.collected) : "Not yet", line.collected ? "" : "book-wait"));
+    var actions = document.createElement("td");
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "ov-delete";
+    remove.dataset.bookDelete = line.id;
+    remove.textContent = "Delete";
+    remove.setAttribute("aria-label", "Delete " + (line.name || "book line"));
+    actions.appendChild(remove);
+    tr.appendChild(actions);
+    body.appendChild(tr);
+  }
+}
+
+function openBookEdit(id) {
+  var line = id ? findBook(id) : null;
+  bookEditId = line ? line.id : "";
+  document.getElementById("book-edit-title").textContent = line ? "Edit book line" : "Add book line";
+  document.getElementById("book-date").value = line ? line.date : (state.currentDate || localISODate(new Date()));
+  document.getElementById("book-name").value = line ? line.name : "";
+  document.getElementById("book-contact").value = line ? line.contact : "";
+  document.getElementById("book-item").value = line ? line.item : "";
+  document.getElementById("book-collected").value = line && line.collected ? line.collected : "";
+  var dialog = document.getElementById("book-edit");
+  if (!dialog.open) dialog.showModal();
+  document.getElementById("book-date").focus();
+}
+
+async function saveBookFromForm() {
+  var date = document.getElementById("book-date").value;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    toast("Choose a date.");
+    return;
+  }
+  var name = document.getElementById("book-name").value;
+  var contact = document.getElementById("book-contact").value;
+  var item = document.getElementById("book-item").value;
+  if (!name.trim() && !item.trim()) {
+    toast("Enter a patient name or an item.");
+    return;
+  }
+  var existing = bookEditId ? findBook(bookEditId) : null;
+  var line = normalizeBook({
+    id: existing ? existing.id : uid(),
+    date: date,
+    name: name,
+    contact: contact,
+    item: item,
+    collected: document.getElementById("book-collected").value,
+    createdAt: existing ? existing.createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+  if (!line) return;
+  if (existing) {
+    for (var i = 0; i < state.book.length; i++) if (state.book[i].id === line.id) state.book[i] = line;
+  } else state.book.push(line);
+  bookEditId = "";
+  try {
+    await idbPut("book", line);
+    setSaveStatus("saved");
+  } catch (err) {
+    onSaveError(err);
+  }
+  renderBook();
+}
+
+async function deleteBookLine(id) {
+  var line = findBook(id);
+  if (!line) return;
+  var who = line.name || line.item || "this line";
+  var ok = await ask({
+    title: "Delete this line?",
+    message: "Delete " + who + " from the book? This cannot be undone.",
+    buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Delete", danger: true }]
+  });
+  if (ok !== "ok") return;
+  state.book = state.book.filter(function (item) { return item.id !== id; });
+  try {
+    await idbDelete("book", id);
+    setSaveStatus("saved");
+  } catch (err) {
+    onSaveError(err);
+  }
+  renderBook();
+}
+
+async function applyBookImport(lines, mode) {
+  if (!Array.isArray(lines) || !state.db || !state.db.objectStoreNames.contains("book")) return;
+  var incoming = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = normalizeBook(lines[i]);
+    if (line) incoming.push(line);
+  }
+  if (mode === "replace") {
+    var ids = state.book.map(function (item) { return item.id; });
+    state.book = [];
+    await idbDeleteMany("book", ids);
+  }
+  var writes = [];
+  for (var n = 0; n < incoming.length; n++) {
+    var next = incoming[n];
+    var current = findBook(next.id);
+    if (mode === "merge" && current) {
+      var a = Date.parse(current.updatedAt) || 0;
+      var b = Date.parse(next.updatedAt) || 0;
+      if (a > b) continue;
+      for (var r = 0; r < state.book.length; r++) if (state.book[r].id === next.id) state.book[r] = next;
+    } else if (current) {
+      for (var u = 0; u < state.book.length; u++) if (state.book[u].id === next.id) state.book[u] = next;
+    } else state.book.push(next);
+    writes.push(next);
+  }
+  await idbPutMany("book", writes);
+}
+
+function readCellInput() {
+  var input = document.getElementById("cell-edit-value");
+  var cleaned = String(input && input.value || "").replace(/\D/g, "").slice(0, 5);
+  return cleaned === "" ? null : parseInt(cleaned, 10);
+}
+
+function commitCell(value) {
+  var slot = findSlot(cellEdit.slotId);
+  var group = GROUP_BY_ID[cellEdit.groupId];
+  if (!slot || !group) return;
+  setCellValue(slot, group, cellEdit.key, value);
+  var clear = document.getElementById("clear-numbers");
+  var day = currentDay();
+  if (clear && day) clear.disabled = !day.slots.some(slotHasData);
+  if (quickLoadedId === slot.id) loadQuickSlot(slot);
+  scheduleSave();
+  renderTable();
+}
+
+function openCellEdit(button) {
+  var slot = findSlot(button.dataset.slot);
+  var group = GROUP_BY_ID[button.dataset.group];
+  if (!slot || !group) return;
+  cellEdit.slotId = slot.id;
+  cellEdit.groupId = group.id;
+  cellEdit.key = button.dataset.key || "";
+  document.getElementById("cell-edit-title").textContent = cellEdit.key ? subAria(group, cellEdit.key) : group.label;
+  document.getElementById("cell-edit-when").textContent = slot.start + "\u2013" + slot.end;
+  var input = document.getElementById("cell-edit-value");
+  var value = cellValue(slot, group, cellEdit.key);
+  input.value = value == null ? "" : String(value);
+  var dialog = document.getElementById("cell-edit");
+  if (!dialog.open) dialog.showModal();
+  input.focus();
+  if (input.select) input.select();
+}
+
 function buildBackupObject() {
   var days = [];
   state.days.forEach(function (raw) {
@@ -2543,14 +2932,15 @@ function buildBackupObject() {
   delete settings.key;
   return {
     app: "Montebello Stats",
-    schema: 1,
+    schema: 2,
     kind: "full-backup",
     hospital: "Montebello Hospital",
     title: "Hourly outpatient statistics \u2013 prescription and patient volumes",
     exportedAt: nowStamp(),
     dayCount: days.length,
     settings: settings,
-    days: days
+    days: days,
+    book: bookLinesForBackup()
   };
 }
 
@@ -2778,7 +3168,8 @@ function makeStyles(dateFormatCode) {
     solidFill("FF3F4A32"),
     solidFill("FFE7F0F8"),
     solidFill("FFF8F1E3"),
-    solidFill("FFF3F6E6")
+    solidFill("FFF3F6E6"),
+    solidFill("FFE5F4F2")
   ];
   var borders = [
     "<border><left/><right/><top/><bottom/><diagonal/></border>",
@@ -2797,6 +3188,7 @@ function makeStyles(dateFormatCode) {
   add("h_chronic", { font: 3, fill: 5, border: 1, align: center });
   add("h_arv", { font: 3, fill: 6, border: 1, align: center });
   add("h_scripts", { font: 3, fill: 7, border: 1, align: center });
+  add("sub_acute", { font: 4, fill: 11, border: 1, align: center });
   add("sub_chronic", { font: 4, fill: 8, border: 1, align: center });
   add("sub_arv", { font: 4, fill: 9, border: 1, align: center });
   add("sub", { font: 4, fill: 8, border: 1, align: center });
@@ -3135,6 +3527,9 @@ function openDb() {
         var backups = db.createObjectStore("backups", { keyPath: "id" });
         backups.createIndex("createdAt", "createdAt");
       }
+      if (event.oldVersion < 2 && !db.objectStoreNames.contains("book")) {
+        db.createObjectStore("book", { keyPath: "id" });
+      }
     };
     req.onsuccess = function () {
       var db = req.result;
@@ -3208,6 +3603,14 @@ async function loadState() {
       if (day.slots.length) state.days.set(day.date, day);
     } catch (err) {
       console.error("Skipped a saved day", days[i], err);
+    }
+  }
+  state.book = [];
+  if (state.db.objectStoreNames.contains("book")) {
+    var lines = await idbGetAll("book");
+    for (var b = 0; b < lines.length; b++) {
+      var line = normalizeBook(lines[b]);
+      if (line) state.book.push(line);
     }
   }
 }
@@ -3484,26 +3887,32 @@ function headerCell(text, opts) {
   return node;
 }
 
-function numInput(slot, group, key) {
-  var input = document.createElement("input");
-  input.type = "text";
-  input.inputMode = "numeric";
-  input.maxLength = 5;
-  input.autocomplete = "off";
-  input.spellcheck = false;
-  input.enterKeyHint = "next";
-  input.className = "num";
-  input.dataset.grid = "1";
-  input.dataset.slot = slot.id;
-  input.dataset.group = group.id;
-  var value = key ? slot.values[group.id][key] : slot.values[group.id];
-  input.value = value == null ? "" : String(value);
-  if (value != null) input.classList.add("has-value");
-  if (key) input.dataset.key = key;
+function cellValue(slot, group, key) {
+  if (!slot || !group) return null;
+  if (group.type === "single") return slot.values[group.id];
+  return slot.values[group.id][key];
+}
+
+function setCellValue(slot, group, key, value) {
+  if (group.type === "single") slot.values[group.id] = value;
+  else slot.values[group.id][key] = value;
+}
+
+function countTile(slot, group, key) {
+  var button = document.createElement("button");
+  button.type = "button";
+  button.className = "count-tile";
+  button.dataset.grid = "1";
+  button.dataset.slot = slot.id;
+  button.dataset.group = group.id;
+  var value = cellValue(slot, group, key);
+  button.textContent = value == null ? "" : String(value);
+  if (value != null) button.classList.add("has-value");
+  if (key) button.dataset.key = key;
   var label = (key ? subAria(group, key) : group.label) + ", " + slot.start + " to " + slot.end;
-  input.setAttribute("aria-label", label);
-  input.title = label;
-  return input;
+  button.setAttribute("aria-label", label + ". Edit count");
+  button.title = label;
+  return button;
 }
 
 function renderTable() {
@@ -3588,7 +3997,7 @@ function renderRow(slot, nowId) {
   for (var i = 0; i < leaves.length; i++) {
     var td = document.createElement("td");
     td.className = "tone-" + leaves[i].group.tone + " " + (leaves[i].key ? "c-split" : "c-single");
-    td.appendChild(numInput(slot, leaves[i].group, leaves[i].key));
+    td.appendChild(countTile(slot, leaves[i].group, leaves[i].key));
     tr.appendChild(td);
   }
   var scripts = document.createElement("td");
@@ -3673,13 +4082,21 @@ function renderChrome() {
   var dateInput = document.getElementById("work-date");
   dateInput.value = state.currentDate;
   var overview = state.view === "overview";
-  document.getElementById("report-title").textContent = overview
-    ? "Overview of saved outpatient statistics"
-    : "Hourly outpatient statistics \u2013 prescription and patient volumes";
+  var book = state.view === "book";
+  document.getElementById("report-title").textContent = book
+    ? "Out of stock book"
+    : overview
+      ? "Overview of saved outpatient statistics"
+      : "Hourly outpatient statistics \u2013 prescription and patient volumes";
   var isToday = state.currentDate === localISODate(new Date());
-  document.getElementById("day-line").textContent = weekday(state.currentDate) + " " + formatDate(state.currentDate);
+  var dayLabel = weekday(state.currentDate) + " " + formatDate(state.currentDate);
+  document.getElementById("day-line").textContent = dayLabel;
   document.getElementById("today-hint").hidden = !isToday;
-  document.title = overview ? "Montebello Stats \u2014 Overview" : "Montebello Stats \u2014 " + formatDate(state.currentDate);
+  document.title = book
+    ? "Montebello Stats \u2014 Book"
+    : overview
+      ? "Montebello Stats \u2014 Overview"
+      : "Montebello Stats \u2014 " + formatDate(state.currentDate);
   document.getElementById("today-btn").disabled = isToday;
   var day = currentDay();
   document.getElementById("clear-numbers").disabled = !(day && day.slots.some(slotHasData));
@@ -3687,18 +4104,24 @@ function renderChrome() {
   var backup = document.getElementById("backup-status");
   backup.textContent = when ? "Last backup " + formatWhen(when) : "No backup yet";
   backup.title = "Full history JSON saved to Downloads and kept in Settings.";
-  document.body.dataset.view = overview ? "overview" : "sheet";
+  var totalsLine = document.getElementById("settings-day-totals");
+  if (totalsLine) totalsLine.textContent = "Totals for " + dayLabel + ".";
+  document.body.dataset.view = book ? "book" : overview ? "overview" : "sheet";
   var sheet = document.getElementById("sheet");
   var overviewEl = document.getElementById("overview");
-  if (sheet) sheet.hidden = overview;
+  var bookEl = document.getElementById("book");
+  if (sheet) sheet.hidden = overview || book;
   if (overviewEl) overviewEl.hidden = !overview;
+  if (bookEl) bookEl.hidden = !book;
   var tabletOn = document.body.classList.contains("is-tablet");
   var sheetBtn = document.getElementById("view-sheet");
   var overviewBtn = document.getElementById("view-overview");
   var tabletBtn = document.getElementById("tablet-mode");
-  if (sheetBtn) sheetBtn.setAttribute("aria-pressed", !overview && !tabletOn ? "true" : "false");
+  var bookBtn = document.getElementById("view-book");
+  if (sheetBtn) sheetBtn.setAttribute("aria-pressed", !overview && !book && !tabletOn ? "true" : "false");
   if (overviewBtn) overviewBtn.setAttribute("aria-pressed", overview ? "true" : "false");
   if (tabletBtn) tabletBtn.setAttribute("aria-pressed", tabletOn ? "true" : "false");
+  if (bookBtn) bookBtn.setAttribute("aria-pressed", book ? "true" : "false");
 }
 
 function renderAll() {
@@ -3708,6 +4131,7 @@ function renderAll() {
   var daysDialog = document.getElementById("days");
   if (daysDialog && daysDialog.open) renderDayList();
   if (state.view === "overview") renderOverview();
+  renderBook();
   placeTabletTable();
 }
 
@@ -4008,24 +4432,6 @@ async function deleteDay(date) {
   renderAll();
 }
 
-function onNumInput(input) {
-  var cleaned = input.value.replace(/\D/g, "").slice(0, 5);
-  if (input.value !== cleaned) input.value = cleaned;
-  var value = cleaned === "" ? null : parseInt(cleaned, 10);
-  input.classList.toggle("has-value", value != null);
-  var slot = findSlot(input.dataset.slot);
-  var group = GROUP_BY_ID[input.dataset.group];
-  if (!slot || !group) return;
-  if (group.type === "single") slot.values[group.id] = value;
-  else slot.values[group.id][input.dataset.key] = value;
-  var tr = input.closest("tr");
-  var scripts = rowScripts(slot);
-  tr.querySelector(".scripts").textContent = scripts == null ? "" : String(scripts);
-  updateTotals(currentDay());
-  document.getElementById("clear-numbers").disabled = !currentDay().slots.some(slotHasData);
-  scheduleSave();
-}
-
 function focusSlot(id) {
   var input = document.querySelector(attrSel("data-slot", id) + '[data-group="patients"]');
   if (!input) return;
@@ -4045,7 +4451,7 @@ function preferredQuickSlot(day) {
 }
 
 function buildQuickKeys() {
-  var ids = ["chronic", "arv"];
+  var ids = ["acute", "chronic"];
   for (var i = 0; i < ids.length; i++) {
     var group = GROUP_BY_ID[ids[i]];
     var host = document.getElementById("quick-" + ids[i]);
@@ -4550,7 +4956,7 @@ async function importBackupFile(file) {
   }
   var choice = await ask({
     title: "Restore backup?",
-    message: "This file has " + incoming.length + " day" + (incoming.length === 1 ? "" : "s") + ". This device has " + state.days.size + ". Merge keeps the newer copy of each day. Replace all swaps the saved statistics for the file." + (skipped ? " " + skipped + " could not be read." : "") + (data.schema && data.schema !== 1 ? " The file uses schema " + data.schema + "." : ""),
+    message: "This file has " + incoming.length + " day" + (incoming.length === 1 ? "" : "s") + ". This device has " + state.days.size + ". Merge keeps the newer copy of each day. Replace all swaps the saved statistics for the file." + (Array.isArray(data.book) ? " The book in this file has " + data.book.length + " line" + (data.book.length === 1 ? "" : "s") + "." : "") + (skipped ? " " + skipped + " could not be read." : "") + (data.schema && data.schema !== 1 && data.schema !== 2 ? " The file uses schema " + data.schema + "." : ""),
     buttons: [
       { value: "cancel", label: "Cancel" },
       { value: "merge", label: "Merge", primary: true },
@@ -4560,6 +4966,8 @@ async function importBackupFile(file) {
   if (choice !== "merge" && choice !== "replace") return;
   try {
     await applyImport(incoming, choice, data.settings);
+    if (Array.isArray(data.book)) await applyBookImport(data.book, choice);
+    renderBook();
     toast(choice === "merge" ? "Backup merged." : "Backup restored.");
   } catch (err) {
     console.error(err);
@@ -4607,7 +5015,7 @@ async function applyImport(incoming, mode, settings) {
 async function eraseAll() {
   var first = await ask({
     title: "Erase all statistics?",
-    message: "This deletes every saved day on this device. Backup files already in Downloads are kept. Saved backup copies in Settings are kept.",
+    message: "This deletes every saved day on this device. The out of stock book is kept. Backup files already in Downloads are kept. Saved backup copies in Settings are kept.",
     buttons: [
       { value: "cancel", label: "Cancel" },
       { value: "backup", label: "Backup first", primary: true },
@@ -4678,7 +5086,7 @@ function rememberFolds() {
 }
 
 function fillPrintValues() {
-  var inputs = document.querySelectorAll("#stats input.num, #stats input.notes");
+  var inputs = document.querySelectorAll("#stats .count-tile, #stats input.notes");
   for (var i = 0; i < inputs.length; i++) {
     var input = inputs[i];
     var cell = input.parentElement;
@@ -4690,7 +5098,7 @@ function fillPrintValues() {
       label.setAttribute("aria-hidden", "true");
       cell.appendChild(label);
     }
-    label.textContent = input.value;
+    label.textContent = input.classList.contains("count-tile") ? input.textContent : input.value;
   }
 }
 
@@ -4829,8 +5237,7 @@ function bind() {
   }
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
-    var confirmDialog = document.getElementById("confirm");
-    if (confirmDialog && confirmDialog.open) return;
+    if (document.querySelector("dialog[open]")) return;
     var layer = document.getElementById("quick-layer");
     if (layer && !layer.hidden) {
       setQuickOpen(false);
@@ -4861,6 +5268,66 @@ function bind() {
   document.getElementById("open-settings").addEventListener("click", openSettings);
   document.getElementById("view-sheet").addEventListener("click", function () { showView("sheet"); });
   document.getElementById("view-overview").addEventListener("click", function () { showView("overview"); });
+  document.getElementById("view-book").addEventListener("click", function () { showView("book"); });
+  document.getElementById("book-add").addEventListener("click", function () { openBookEdit(""); });
+  document.getElementById("book-edit-close").addEventListener("click", function () {
+    document.getElementById("book-edit").close("");
+  });
+  document.getElementById("book").addEventListener("click", function (event) {
+    var el = eventEl(event);
+    if (!el || !el.closest) return;
+    var remove = el.closest("[data-book-delete]");
+    if (remove) { deleteBookLine(remove.dataset.bookDelete); return; }
+    var open = el.closest("[data-book-open]");
+    if (open) openBookEdit(open.dataset.bookOpen);
+  });
+  document.getElementById("book-edit-form").addEventListener("submit", function (event) {
+    var submitter = event.submitter;
+    if (!submitter || submitter.value !== "save") return;
+    var date = document.getElementById("book-date").value;
+    var name = document.getElementById("book-name").value;
+    var item = document.getElementById("book-item").value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      event.preventDefault();
+      toast("Choose a date.");
+      return;
+    }
+    if (!name.trim() && !item.trim()) {
+      event.preventDefault();
+      toast("Enter a patient name or an item.");
+    }
+  });
+  document.getElementById("book-edit").addEventListener("close", function () {
+    var dialog = document.getElementById("book-edit");
+    var value = dialog.returnValue;
+    dialog.returnValue = "";
+    if (value !== "save") {
+      bookEditId = "";
+      return;
+    }
+    saveBookFromForm();
+  });
+  document.getElementById("cell-edit-value").addEventListener("input", function (event) {
+    var cleaned = String(event.target.value || "").replace(/\D/g, "").slice(0, 5);
+    if (event.target.value !== cleaned) event.target.value = cleaned;
+  });
+  document.getElementById("cell-edit-plus").addEventListener("click", function () {
+    var input = document.getElementById("cell-edit-value");
+    var cleaned = String(input.value || "").replace(/\D/g, "").slice(0, 5);
+    var current = cleaned === "" ? 0 : parseInt(cleaned, 10);
+    var next = Math.min(99999, current + 1);
+    input.value = String(next);
+    commitCell(next);
+    input.focus();
+    if (input.select) input.select();
+  });
+  document.getElementById("cell-edit").addEventListener("close", function () {
+    var dialog = document.getElementById("cell-edit");
+    var value = dialog.returnValue;
+    dialog.returnValue = "";
+    if (value !== "save") return;
+    commitCell(readCellInput());
+  });
   document.getElementById("tablet-mode").addEventListener("click", function () {
     var on = !document.body.classList.contains("is-tablet");
     if (on) {
@@ -4953,8 +5420,7 @@ function bind() {
     if (resolve) resolve(document.getElementById("confirm").returnValue || "");
   });
   document.getElementById("stats").addEventListener("input", function (event) {
-    if (event.target.classList.contains("num")) onNumInput(event.target);
-    else if (event.target.dataset.field === "notes") {
+    if (event.target.dataset.field === "notes") {
       var slot = findSlot(event.target.dataset.slot);
       if (!slot) return;
       slot.notes = event.target.value.slice(0, 500);
@@ -4966,20 +5432,23 @@ function bind() {
     var el = eventEl(event);
     var input = el && el.closest ? el.closest("[data-grid]") : null;
     if (!input) return;
+    if (event.key === "Enter" && input.classList.contains("count-tile")) {
+      event.preventDefault();
+      openCellEdit(input);
+      return;
+    }
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].indexOf(event.key) < 0) return;
-    if (input.classList.contains("num") || input.type === "time") event.preventDefault();
+    if (input.classList.contains("count-tile")) event.preventDefault();
     var before = document.activeElement;
     moveGrid(input, event.key, event.shiftKey);
     if (document.activeElement !== before) event.preventDefault();
   });
-  document.getElementById("stats").addEventListener("focusin", function (event) {
-    if (event.target.classList && event.target.classList.contains("num")) {
-      setTimeout(function () { event.target.select(); }, 0);
-    }
-  });
   document.getElementById("stats").addEventListener("click", function (event) {
     var el = eventEl(event);
-    var btn = el && el.closest ? el.closest("[data-remove]") : null;
+    if (!el || !el.closest) return;
+    var tile = el.closest(".count-tile");
+    if (tile) { openCellEdit(tile); return; }
+    var btn = el.closest("[data-remove]");
     if (btn) removeSlot(btn.dataset.remove);
   });
   document.getElementById("day-list").addEventListener("click", function (event) {
@@ -5173,12 +5642,13 @@ async function init() {
   state.currentDate = initialDate();
   state.view = "sheet";
   try {
-    if (sessionStorage.getItem("montebello-stats-view") === "overview") state.view = "overview";
+    var savedView = sessionStorage.getItem("montebello-stats-view");
+    if (savedView === "overview" || savedView === "book") state.view = savedView;
     var savedCat = sessionStorage.getItem("montebello-stats-ov-cat");
     if (savedCat) state.overviewCategory = savedCat;
   } catch (err) {}
   var restoreTablet = false;
-  try { restoreTablet = sessionStorage.getItem("montebello-stats-tablet") === "on" && state.view !== "overview"; } catch (err) {}
+  try { restoreTablet = sessionStorage.getItem("montebello-stats-tablet") === "on" && state.view === "sheet"; } catch (err) {}
   state.settings = defaultSettings();
   try {
     state.db = await openDb();
@@ -5221,12 +5691,13 @@ function selfTest() {
       assert(slots.length === 9, "nine default hours");
       assert(slots[0].start === "07:00" && slots[0].end === "08:00", "first hour");
       assert(slots[8].start === "15:00" && slots[8].end === "16:00", "last hour");
+      assert(COLUMN_GROUPS[1].keys.join(",") === "1,2,3,4,5+", "acute keys");
       assert(COLUMN_GROUPS[2].keys.join(",") === "1,2,3,4,5,6,7,8,9+", "chronic keys");
-      assert(COLUMN_GROUPS[3].keys.join(",") === "1,2,3", "arv keys");
+      assert(COLUMN_GROUPS[3].type === "single", "arv is one column");
       slots[0].values.patients = 4;
-      slots[0].values.acute = 2;
+      slots[0].values.acute["1"] = 2;
       slots[0].values.chronic["1"] = 3;
-      slots[0].values.arv["2"] = 1;
+      slots[0].values.arv = 1;
       assert(rowScripts(slots[0]) === 6, "scripts ignore patients");
       assert(groupSum(slots[0], GROUP_BY_ID.chronic) === 3, "chronic sum");
     },
@@ -5236,13 +5707,20 @@ function selfTest() {
         slots: [{ start: "08:00", end: "09:00", patients: "5", acute: -1, chronic: [1, 0, 2], arv: { "2": 4 }, notes: "  hi " }]
       });
       assert(day.slots[0].values.patients === 5, "string number");
-      assert(day.slots[0].values.acute === null, "negative dropped");
+      assert(day.slots[0].values.acute["1"] === null, "negative dropped");
       assert(day.slots[0].values.chronic["1"] === 1, "chronic array");
       assert(day.slots[0].values.chronic["2"] === 0, "explicit zero");
       assert(day.slots[0].values.chronic["3"] === 2, "third item");
       assert(day.slots[0].values.chronic["9+"] === null, "missing key");
-      assert(day.slots[0].values.arv["2"] === 4, "arv object");
+      assert(day.slots[0].values.arv === 4, "legacy arv keys add up");
       assert(day.slots[0].notes === "  hi ", "notes kept");
+      var kept = normalizeSlot({ start: "07:00", end: "08:00", acute: 7, arv: 2 });
+      assert(kept.values.acute["1"] === 7 && kept.values.acute["5+"] === null, "legacy acute number");
+      assert(kept.values.arv === 2, "arv number");
+      assert(rowScripts(kept) === 9, "legacy script total");
+      var bookLine = normalizeBook({ date: "2026-10-31", name: "  Ana  ", contact: " 082 ", item: " item ", collected: "nope" });
+      assert(bookLine.name === "Ana" && bookLine.contact === "082" && bookLine.item === "item" && bookLine.collected === "", "book line");
+      assert(normalizeBook({ date: "bad", name: "A" }) === null, "book date");
     },
     function backupDue() {
       var base = defaultSettings();
@@ -5282,6 +5760,7 @@ function selfTest() {
       assert(all.sum.acute === 4, "acute " + all.sum.acute);
       assert(all.sum.chronic === 6, "chronic " + all.sum.chronic);
       assert(all.sum.arv === 1, "arv " + all.sum.arv);
+      assert(all.acuteKeys["1"] === 4 && all.acuteKeys["5+"] === 0, "acute keys");
       assert(all.chronicKeys["9+"] === 4, "nine plus");
       assert(all.chronicKeys["1"] === 2, "one item");
       assert(all.busiestDay.date === "2026-10-30", "busiest day");
@@ -5308,9 +5787,9 @@ function selfTest() {
       state.settings = defaultSettings();
       var slots = defaultSlots(state.settings);
       slots[0].values.patients = 4;
-      slots[0].values.acute = 2;
+      slots[0].values.acute["1"] = 2;
       slots[0].values.chronic["1"] = 3;
-      slots[0].values.arv["2"] = 1;
+      slots[0].values.arv = 1;
       slots[0].notes = 'He said "ok", fine';
       var day = { date: "2026-10-31", slots: slots, createdAt: "2026-10-31T07:00:00.000Z", updatedAt: "2026-10-31T07:00:00.000Z" };
       var bytes = buildXlsx([day], state.settings);
@@ -5319,6 +5798,8 @@ function selfTest() {
       assert(text.indexOf("[Content_Types].xml") >= 0, "content types");
       assert(text.indexOf("xl/workbook.xml") >= 0, "workbook");
       assert(text.indexOf("Hourly outpatient statistics") >= 0, "title");
+      assert(text.indexOf("Acute scripts") >= 0, "acute header");
+      assert(text.indexOf("5+") >= 0, "five plus");
       assert(text.indexOf("Chronic scripts") >= 0, "chronic header");
       assert(text.indexOf("9+") >= 0, "nine plus");
       assert(text.indexOf("Daily summary") >= 0, "summary sheet");
