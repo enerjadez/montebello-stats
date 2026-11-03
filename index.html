@@ -347,7 +347,57 @@
   .c-single { min-width: 84px; }
   .c-split { min-width: 48px; }
   .c-scripts { min-width: 76px; }
-  .c-notes { min-width: 130px; }
+  .c-notes { width: 4.6rem; min-width: 4.6rem; max-width: 4.6rem; }
+  .stats.notes-open .c-notes { width: 8.5rem; min-width: 8.5rem; max-width: 8.5rem; }
+  .notes-fold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+  }
+  .notes-fold::before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid currentColor;
+  }
+  .stats.notes-open .notes-fold::before {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    border-bottom: 0;
+  }
+  .stats:not(.notes-open) td.c-notes { position: relative; }
+  .stats:not(.notes-open) input.notes {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .stats:not(.notes-open) td.c-notes.has-note::after {
+    content: "";
+    display: block;
+    width: 7px;
+    height: 7px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: var(--accent);
+  }
   .slot-time {
     display: block;
     font-size: 0.78rem;
@@ -366,7 +416,7 @@
     font-size: 16px;
     font-variant-numeric: tabular-nums;
   }
-  .stats input.notes { text-align: left; padding: 0 8px; }
+  .stats input.notes { width: 100%; min-width: 0; text-align: left; padding: 0 6px; }
   .stats input:focus { background: var(--input); border-color: var(--accent); }
   .stats input[aria-invalid="true"] { outline: 2px solid var(--danger); }
   .num.has-value { font-weight: 700; }
@@ -442,6 +492,21 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
   }
+  #cell-edit .dialog-actions { margin-top: 12px; }
+  #cell-edit .dialog-actions .btn {
+    flex: 1 1 0;
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 1.05rem;
+  }
+  #cell-edit-plus {
+    background: var(--ok);
+    color: #fff;
+    border-color: transparent;
+    font-size: 1.35rem;
+    font-weight: 750;
+  }
+  [data-theme="dark"] #cell-edit-plus { color: #06211f; }
   #settings .summary { padding: 2px 0 4px; }
   #settings[open] {
     display: flex;
@@ -851,7 +916,7 @@
     .slot-time { font-size: 0.72rem; }
     .c-single { min-width: 68px; }
     .c-split { min-width: 42px; }
-    .c-notes { min-width: 120px; }
+    .stats.notes-open .c-notes { min-width: 7.5rem; max-width: 7.5rem; width: 7.5rem; }
     .status-bar { padding: 0 12px 8px; }
     .ov-cats { padding: 8px; }
     .ov-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 12px 0; }
@@ -1070,7 +1135,9 @@
     .stats thead tr:first-child th.tone-arv { width: 8%; }
     .stats thead tr:first-child th.c-scripts { width: 7%; }
     .stats thead tr:first-child th.c-notes { width: 15%; }
-    .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; }
+    .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; max-width: none !important; width: auto; }
+    .stats:not(.notes-open) td.c-notes.has-note::after { display: none !important; }
+    .stats:not(.notes-open) input.notes { position: static !important; clip: auto !important; width: auto !important; height: auto !important; margin: 0 !important; }
     #stats input, #stats .count-tile, .time-dash { display: none !important; }
     .print-time, .print-val { display: inline; font-size: 10pt; font-variant-numeric: tabular-nums; }
     .c-notes .print-val { display: block; text-align: left; white-space: normal; word-break: break-word; }
@@ -1354,7 +1421,7 @@
       </div>
       <details class="help">
         <summary>How to record</summary>
-        <p>Each row is one hour. Tap a count to type it or add 1. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
+        <p>Each row is one hour. Tap a count to type it or add 1. Notes stays folded until you open the Notes heading. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
       </details>
     </section>
     <section class="settings-section">
@@ -4208,7 +4275,14 @@ function renderTable() {
     }
   }
   hr1.appendChild(headerCell("Scripts", { className: "tone-scripts c-scripts", scope: "col", rowSpan: hasSplit ? 2 : 1, title: "Acute + chronic + ARV" }));
-  hr1.appendChild(headerCell("Notes", { className: "c-notes", scope: "col", rowSpan: hasSplit ? 2 : 1 }));
+  var notesHead = headerCell("", { className: "c-notes", scope: "col", rowSpan: hasSplit ? 2 : 1 });
+  var notesFold = document.createElement("button");
+  notesFold.type = "button";
+  notesFold.id = "notes-fold";
+  notesFold.className = "notes-fold";
+  notesFold.textContent = "Notes";
+  notesHead.appendChild(notesFold);
+  hr1.appendChild(notesHead);
   var delHead = headerCell("", { className: "col-del", rowSpan: hasSplit ? 2 : 1 });
   delHead.setAttribute("aria-hidden", "true");
   hr1.appendChild(delHead);
@@ -4220,7 +4294,43 @@ function renderTable() {
   var tfoot = document.createElement("tfoot");
   tfoot.appendChild(renderTotalRow(leaves));
   table.replaceChildren(caption, thead, tbody, tfoot);
+  applyNotesFold();
   updateTotals(day);
+}
+
+function notesFoldOpen() {
+  try { return sessionStorage.getItem("montebello-stats-notes") === "open"; }
+  catch (err) { return false; }
+}
+
+function applyNotesFold() {
+  var table = document.getElementById("stats");
+  if (!table) return;
+  var open = notesFoldOpen();
+  table.classList.toggle("notes-open", open);
+  var button = document.getElementById("notes-fold");
+  if (button) {
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    button.setAttribute("aria-label", open ? "Hide notes" : "Show notes");
+  }
+  var leaves = tableLeaves().length;
+  table.dataset.cols = String(open ? leaves + 1 : leaves);
+  var inputs = table.querySelectorAll("input.notes");
+  for (var i = 0; i < inputs.length; i++) {
+    if (open) {
+      inputs[i].dataset.grid = "1";
+      inputs[i].removeAttribute("tabindex");
+    } else {
+      delete inputs[i].dataset.grid;
+      inputs[i].tabIndex = -1;
+    }
+  }
+}
+
+function setNotesFold(open) {
+  try { sessionStorage.setItem("montebello-stats-notes", open ? "open" : "closed"); }
+  catch (err) {}
+  applyNotesFold();
 }
 
 function renderRow(slot, nowId) {
@@ -4248,9 +4358,11 @@ function renderRow(slot, nowId) {
   tr.appendChild(scripts);
   var notesTd = document.createElement("td");
   notesTd.className = "c-notes";
+  if (slot.notes && slot.notes.trim()) notesTd.classList.add("has-note");
   var notes = document.createElement("input");
   notes.type = "text";
   notes.maxLength = 500;
+  notes.size = 12;
   notes.value = slot.notes || "";
   notes.className = "notes";
   notes.placeholder = "Note";
@@ -4294,7 +4406,9 @@ function renderTotalRow(leaves) {
   scripts.setAttribute("data-total", "scripts");
   scripts.textContent = "0";
   tr.appendChild(scripts);
-  tr.appendChild(document.createElement("td"));
+  var notesTotal = document.createElement("td");
+  notesTotal.className = "c-notes";
+  tr.appendChild(notesTotal);
   var del = document.createElement("td");
   del.className = "col-del";
   tr.appendChild(del);
@@ -5687,6 +5801,7 @@ function bind() {
       var slot = findSlot(event.target.dataset.slot);
       if (!slot) return;
       slot.notes = event.target.value.slice(0, 500);
+      if (event.target.parentElement) event.target.parentElement.classList.toggle("has-note", !!slot.notes.trim());
       document.getElementById("clear-numbers").disabled = !currentDay().slots.some(slotHasData);
       scheduleSave();
     }
@@ -5709,6 +5824,15 @@ function bind() {
   document.getElementById("stats").addEventListener("click", function (event) {
     var el = eventEl(event);
     if (!el || !el.closest) return;
+    var fold = el.closest("#notes-fold");
+    if (fold) { setNotesFold(!document.getElementById("stats").classList.contains("notes-open")); return; }
+    var noteCell = el.closest("td.c-notes");
+    if (noteCell && !document.getElementById("stats").classList.contains("notes-open")) {
+      setNotesFold(true);
+      var noteInput = noteCell.querySelector("input.notes");
+      if (noteInput) noteInput.focus();
+      return;
+    }
     var tile = el.closest(".count-tile");
     if (tile) { openCellEdit(tile); return; }
     var btn = el.closest("[data-remove]");
