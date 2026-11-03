@@ -343,40 +343,24 @@
   }
   .count-tile:focus { background: var(--input); border-color: var(--accent); }
   .count-tile.has-value { font-weight: 700; }
-  .c-time { width: 104px; min-width: 104px; max-width: 112px; }
+  .c-time { width: 5.35rem; min-width: 5.35rem; max-width: 5.35rem; padding-left: 1px; padding-right: 1px; }
   .c-single { min-width: 84px; }
   .c-split { min-width: 48px; }
   .c-scripts { min-width: 76px; }
-  .c-notes { width: 4.6rem; min-width: 4.6rem; max-width: 4.6rem; }
-  .stats.notes-open .c-notes { width: 8.5rem; min-width: 8.5rem; max-width: 8.5rem; }
+  .c-notes { width: 1.8rem; min-width: 1.8rem; max-width: 1.8rem; padding-left: 0; padding-right: 0; }
+  .stats.notes-open .c-notes { width: 7rem; min-width: 7rem; max-width: 7rem; }
   .notes-fold {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
     width: 100%;
     min-height: 32px;
     padding: 0;
     border: 0;
     background: transparent;
     color: inherit;
-    font: inherit;
-    font-weight: 700;
   }
-  .notes-fold::before {
-    content: "";
-    width: 0;
-    height: 0;
-    border-top: 4px solid transparent;
-    border-bottom: 4px solid transparent;
-    border-left: 5px solid currentColor;
-  }
-  .stats.notes-open .notes-fold::before {
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid currentColor;
-    border-bottom: 0;
-  }
+  .notes-fold svg { display: block; }
   .stats:not(.notes-open) td.c-notes { position: relative; }
   .stats:not(.notes-open) input.notes {
     position: absolute;
@@ -400,11 +384,11 @@
   }
   .slot-time {
     display: block;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 650;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
   }
   .stats input {
     width: 100%;
@@ -912,11 +896,11 @@
     .table-card { margin: 0; }
     details.fold > summary { padding-left: 12px; padding-right: 12px; }
     .table-wrap { -webkit-overflow-scrolling: touch; }
-    .c-time { width: 96px; min-width: 96px; max-width: 104px; }
-    .slot-time { font-size: 0.72rem; }
+    .c-time { width: 5.15rem; min-width: 5.15rem; max-width: 5.15rem; }
+    .slot-time { font-size: 0.68rem; }
     .c-single { min-width: 68px; }
     .c-split { min-width: 42px; }
-    .stats.notes-open .c-notes { min-width: 7.5rem; max-width: 7.5rem; width: 7.5rem; }
+    .stats.notes-open .c-notes { min-width: 6.5rem; max-width: 6.5rem; width: 6.5rem; }
     .status-bar { padding: 0 12px 8px; }
     .ov-cats { padding: 8px; }
     .ov-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 12px 0; }
@@ -1196,7 +1180,7 @@
   <p class="scroll-hint no-print">Swipe sideways for acute, chronic, scripts and notes.</p>
   <div class="hours-pane">
   <details class="fold" id="fold-hours" open>
-    <summary>Hours</summary>
+    <summary>OPD stats</summary>
   <div class="table-card">
     <div id="loading" class="loading">Opening saved statistics…</div>
     <div id="empty" class="empty" hidden>
@@ -1421,7 +1405,7 @@
       </div>
       <details class="help">
         <summary>How to record</summary>
-        <p>Each row is one hour. Tap a count to type it or add 1. Notes stays folded until you open the Notes heading. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
+        <p>Each row is one hour. Tap a count to type it or add 1. Cancel puts that count back. Notes stays folded until you open the pen. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
       </details>
     </section>
     <section class="settings-section">
@@ -1672,7 +1656,7 @@ var state = {
   book: [],
   items: []
 };
-var cellEdit = { slotId: "", groupId: "", key: "" };
+var cellEdit = { slotId: "", groupId: "", key: "", origin: null };
 var bookEditId = "";
 var itemEditId = "";
 var itemSearchTimer = 0;
@@ -3207,11 +3191,19 @@ function openCellEdit(button) {
   document.getElementById("cell-edit-when").textContent = slot.start + "\u2013" + slot.end;
   var input = document.getElementById("cell-edit-value");
   var value = cellValue(slot, group, cellEdit.key);
+  cellEdit.origin = value;
   input.value = value == null ? "" : String(value);
   var dialog = document.getElementById("cell-edit");
   if (!dialog.open) dialog.showModal();
   input.focus();
   if (input.select) input.select();
+}
+
+function revertCellEdit() {
+  var slot = findSlot(cellEdit.slotId);
+  var group = GROUP_BY_ID[cellEdit.groupId];
+  if (!slot || !group) return;
+  if (cellValue(slot, group, cellEdit.key) !== cellEdit.origin) commitCell(cellEdit.origin);
 }
 
 function buildBackupObject() {
@@ -4280,12 +4272,18 @@ function renderTable() {
   notesFold.type = "button";
   notesFold.id = "notes-fold";
   notesFold.className = "notes-fold";
-  notesFold.textContent = "Notes";
+  var pen = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  pen.setAttribute("viewBox", "0 0 24 24");
+  pen.setAttribute("width", "16");
+  pen.setAttribute("height", "16");
+  pen.setAttribute("aria-hidden", "true");
+  var penPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  penPath.setAttribute("fill", "currentColor");
+  penPath.setAttribute("d", "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z");
+  pen.appendChild(penPath);
+  notesFold.appendChild(pen);
   notesHead.appendChild(notesFold);
   hr1.appendChild(notesHead);
-  var delHead = headerCell("", { className: "col-del", rowSpan: hasSplit ? 2 : 1 });
-  delHead.setAttribute("aria-hidden", "true");
-  hr1.appendChild(delHead);
   thead.appendChild(hr1);
   if (hasSplit) thead.appendChild(hr2);
   var tbody = document.createElement("tbody");
@@ -4374,16 +4372,6 @@ function renderRow(slot, nowId) {
   notes.setAttribute("aria-label", "Notes " + slot.start + " to " + slot.end);
   notesTd.appendChild(notes);
   tr.appendChild(notesTd);
-  var del = document.createElement("td");
-  del.className = "col-del";
-  var btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "icon-btn";
-  btn.dataset.remove = slot.id;
-  btn.setAttribute("aria-label", "Remove " + slot.start + " to " + slot.end);
-  btn.textContent = "\u2715";
-  del.appendChild(btn);
-  tr.appendChild(del);
   return tr;
 }
 
@@ -4409,9 +4397,6 @@ function renderTotalRow(leaves) {
   var notesTotal = document.createElement("td");
   notesTotal.className = "c-notes";
   tr.appendChild(notesTotal);
-  var del = document.createElement("td");
-  del.className = "col-del";
-  tr.appendChild(del);
   return tr;
 }
 
@@ -5702,8 +5687,8 @@ function bind() {
     var dialog = document.getElementById("cell-edit");
     var value = dialog.returnValue;
     dialog.returnValue = "";
-    if (value !== "save") return;
-    commitCell(readCellInput());
+    if (value === "save") commitCell(readCellInput());
+    else revertCellEdit();
   });
   document.getElementById("tablet-mode").addEventListener("click", function () {
     var on = !document.body.classList.contains("is-tablet");
@@ -5834,9 +5819,7 @@ function bind() {
       return;
     }
     var tile = el.closest(".count-tile");
-    if (tile) { openCellEdit(tile); return; }
-    var btn = el.closest("[data-remove]");
-    if (btn) removeSlot(btn.dataset.remove);
+    if (tile) openCellEdit(tile);
   });
   document.getElementById("day-list").addEventListener("click", function (event) {
     var el = eventEl(event);
