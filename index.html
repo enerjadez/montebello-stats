@@ -343,7 +343,9 @@
   }
   .count-tile:focus { background: var(--input); border-color: var(--accent); }
   .count-tile.has-value { font-weight: 700; }
-  .c-time { width: 5.35rem; min-width: 5.35rem; max-width: 5.35rem; padding-left: 1px; padding-right: 1px; }
+  .c-time { width: 2.75rem; min-width: 2.75rem; max-width: 2.75rem; padding-left: 0; padding-right: 0; }
+  th.c-time { padding: 4px 0; font-size: 0.68rem; letter-spacing: -0.02em; white-space: nowrap; }
+  .stats tfoot th.sticky-col { font-size: 0.68rem; letter-spacing: -0.03em; padding-left: 0; padding-right: 0; white-space: nowrap; }
   .c-single { min-width: 84px; }
   .c-split { min-width: 48px; }
   .c-scripts { min-width: 76px; }
@@ -383,13 +385,18 @@
     background: var(--accent);
   }
   .slot-time {
-    display: block;
-    font-size: 0.72rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
     font-weight: 650;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
     white-space: nowrap;
-    letter-spacing: -0.04em;
   }
+  .slot-end { color: var(--muted); font-weight: 600; }
   .stats input {
     width: 100%;
     min-height: 40px;
@@ -466,7 +473,8 @@
     overscroll-behavior: contain;
   }
   #settings { width: min(560px, calc(100vw - 24px)); }
-  #days, #export, #book-edit, #items { width: min(480px, calc(100vw - 24px)); }
+  #days, #export, #book-edit { width: min(480px, calc(100vw - 24px)); }
+  #items { width: min(680px, calc(100vw - 24px)); }
   #confirm, #cell-edit { width: min(440px, calc(100vw - 24px)); }
   #cell-edit form, #book-edit form, #items form { margin: 0; }
   #cell-edit form { padding: 18px; }
@@ -649,6 +657,9 @@
     z-index: 50;
     right: calc(16px + env(safe-area-inset-right));
     bottom: calc(16px + env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 56px;
     height: 56px;
     padding: 0;
@@ -656,10 +667,10 @@
     border-radius: 50%;
     background: var(--accent);
     color: var(--accent-ink);
-    font-size: 2rem;
-    line-height: 1;
+    line-height: 0;
     box-shadow: var(--shadow);
   }
+  .fab svg { display: block; }
   body[data-view="overview"] .fab,
   body[data-view="book"] .fab { display: none; }
   .book { padding: 4px 12px 28px; }
@@ -673,6 +684,12 @@
   .book-head h2 { margin: 0 0 4px; font-size: 1.05rem; }
   .book-head .help-text { margin: 0; max-width: 62ch; }
   .book-count { margin: 0 0 8px; color: var(--muted); font-size: 0.85rem; }
+  .book-filters { margin: 0 0 10px; }
+  .book-filters fieldset { margin: 0 0 8px; }
+  .book-filters .choice-row { gap: 4px 16px; }
+  .book-filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+  .book-filter-row .field { margin: 0; flex: 1 1 180px; }
+  .book-filter-row .field:last-child { flex: 0 1 150px; }
   .book-actions { display: flex; flex-wrap: wrap; gap: 8px; flex: 0 0 auto; }
   .book-open { font-weight: 700; color: var(--accent); }
   .book-wait { color: var(--muted); }
@@ -682,7 +699,7 @@
   #settings .help { display: block; margin: 8px 0 0; }
   .settings-today { display: flex; align-items: flex-end; margin: 8px 0; }
   .settings-today .btn { width: 100%; }
-  #item-list { max-height: min(40dvh, 320px); overflow: auto; }
+  .item-table-wrap { max-height: min(40dvh, 320px); overflow: auto; }
   .quick-layer { position: fixed; inset: 0; z-index: 60; }
   .quick-backdrop { position: absolute; inset: 0; border: 0; background: color-mix(in srgb, #000 40%, transparent); }
   .quick-panel {
@@ -896,8 +913,7 @@
     .table-card { margin: 0; }
     details.fold > summary { padding-left: 12px; padding-right: 12px; }
     .table-wrap { -webkit-overflow-scrolling: touch; }
-    .c-time { width: 5.15rem; min-width: 5.15rem; max-width: 5.15rem; }
-    .slot-time { font-size: 0.68rem; }
+    .c-time { width: 2.75rem; min-width: 2.75rem; max-width: 2.75rem; }
     .c-single { min-width: 68px; }
     .c-split { min-width: 42px; }
     .stats.notes-open .c-notes { min-width: 6.5rem; max-width: 6.5rem; width: 6.5rem; }
@@ -1113,12 +1129,12 @@
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
-    .stats thead tr:first-child th:first-child { width: 10%; }
+    .stats thead tr:first-child th:first-child { width: 6%; }
     .stats thead tr:first-child th.tone-acute { width: 24%; }
     .stats thead tr:first-child th.tone-chronic { width: 36%; }
     .stats thead tr:first-child th.tone-arv { width: 8%; }
     .stats thead tr:first-child th.c-scripts { width: 7%; }
-    .stats thead tr:first-child th.c-notes { width: 15%; }
+    .stats thead tr:first-child th.c-notes { width: 19%; }
     .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; max-width: none !important; width: auto; }
     .stats:not(.notes-open) td.c-notes.has-note::after { display: none !important; }
     .stats:not(.notes-open) input.notes { position: static !important; clip: auto !important; width: auto !important; height: auto !important; margin: 0 !important; }
@@ -1296,13 +1312,39 @@
     <div class="book-head">
       <div>
         <h2 id="book-title">Out of stock book</h2>
-        <p class="help-text">Write a line when an item is out of stock and a patient is waiting. Collected is the date they collected it. Leave Collected empty until they do. Search Item for a medicine from the list.</p>
+        <p class="help-text">Write a line when a medicine is out of stock and a patient is waiting. The day arrows show this day’s page. Choose a date range or all days to look further. Collected stays empty until they collect it.</p>
       </div>
       <div class="book-actions">
         <button type="button" class="btn" id="book-items">Items</button>
         <button type="button" class="btn primary" id="book-add">Add line</button>
       </div>
     </div>
+    <form id="book-filters" class="book-filters">
+      <fieldset>
+        <legend>Page</legend>
+        <div class="choice-row">
+          <label class="stack-label"><input type="radio" name="book-scope" value="day" checked> This day</label>
+          <label class="stack-label"><input type="radio" name="book-scope" value="range"> Date range</label>
+          <label class="stack-label"><input type="radio" name="book-scope" value="all"> All days</label>
+        </div>
+      </fieldset>
+      <div id="book-range" class="row-2" hidden>
+        <label class="field">From<input type="date" id="book-from" name="book-from"></label>
+        <label class="field">To<input type="date" id="book-to" name="book-to"></label>
+      </div>
+      <div class="book-filter-row">
+        <label class="field">Search
+          <input type="search" id="book-search" name="book-search" autocomplete="off" enterkeyhint="search">
+        </label>
+        <label class="field">Collected
+          <select id="book-status" name="book-status">
+            <option value="any">Any</option>
+            <option value="waiting">Waiting</option>
+            <option value="collected">Collected</option>
+          </select>
+        </label>
+      </div>
+    </form>
     <p id="book-count" class="book-count"></p>
     <div class="ov-table-wrap">
       <table class="ov-table book-table">
@@ -1312,7 +1354,7 @@
             <th scope="col">Date</th>
             <th scope="col">Patient name</th>
             <th scope="col">Contact no.</th>
-            <th scope="col">Item</th>
+            <th scope="col">Medicine</th>
             <th scope="col">Collected</th>
             <th scope="col"><span class="sr-only">Actions</span></th>
           </tr>
@@ -1334,7 +1376,7 @@
   </footer>
 </div>
 <div class="toasts no-print" id="toasts" aria-live="polite"></div>
-<button type="button" id="quick-fab" class="fab no-print" aria-expanded="false" aria-controls="quick-panel"><span aria-hidden="true">+</span><span class="sr-only">Add numbers</span></button>
+<button type="button" id="quick-fab" class="fab no-print" aria-expanded="false" aria-controls="quick-panel"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg><span class="sr-only">Add numbers</span></button>
 <div id="quick-layer" class="quick-layer no-print" hidden>
   <button type="button" id="quick-backdrop" class="quick-backdrop" aria-label="Close"></button>
   <div id="quick-panel" class="quick-panel" role="dialog" aria-modal="true" aria-labelledby="quick-title">
@@ -1573,11 +1615,11 @@
       <label class="field">Contact no.
         <input type="tel" id="book-contact" maxlength="40" autocomplete="tel" inputmode="tel">
       </label>
-      <label class="field">Item
-        <input type="text" id="book-item" maxlength="160" autocomplete="off" list="book-item-list" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="book-item-hint" enterkeyhint="done">
+      <label class="field">Medicine
+        <input type="text" id="book-item" name="book-item" maxlength="260" autocomplete="off" list="book-item-list" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="book-item-hint" enterkeyhint="done">
         <datalist id="book-item-list"></datalist>
       </label>
-      <p class="help-text" id="book-item-hint">Search the item list. Add a missing medicine under Items.</p>
+      <p class="help-text" id="book-item-hint">Search the medicine list. Add a missing medicine under Items.</p>
       <p class="help-text">Collected stays empty until the patient collects the item.</p>
       <div class="dialog-actions">
         <button type="submit" class="btn primary" value="save">Save</button>
@@ -1594,16 +1636,49 @@
       <button type="button" class="btn" id="items-close">Close</button>
     </div>
     <div class="dialog-body">
-      <label class="field">Name
-        <input type="text" id="item-name" maxlength="160" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus>
+      <label class="field">Medicine
+        <input type="text" id="item-name" name="item-name" maxlength="160" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus required>
       </label>
+      <div class="row-2">
+        <label class="field">Strength
+          <input type="text" id="item-strength" name="item-strength" maxlength="80" placeholder="500 mg" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </label>
+        <label class="field">Form
+          <select id="item-form" name="item-form">
+            <option value="">Not stated</option>
+            <option value="tablet">Tablet</option>
+            <option value="capsule">Capsule</option>
+            <option value="syrup">Syrup</option>
+            <option value="suspension">Suspension</option>
+            <option value="cream">Cream</option>
+            <option value="ointment">Ointment</option>
+            <option value="injection">Injection</option>
+            <option value="drops">Drops</option>
+            <option value="inhaler">Inhaler</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+      </div>
       <div class="dialog-actions">
-        <button type="submit" class="btn primary" id="item-save">Add item</button>
+        <button type="submit" class="btn primary" id="item-save">Add medicine</button>
         <button type="button" class="btn" id="item-cancel" hidden>Cancel</button>
       </div>
-      <p class="help-text">Add the medicines you record in the book. Search on a book line uses this list. Removing or renaming an item leaves book lines already saved as they are.</p>
-      <p class="help-text" id="items-empty" hidden>No items yet.</p>
-      <ul id="item-list" class="plain-list"></ul>
+      <p class="help-text">Add the medicines you record in the book. Strength and form can stay blank. Search on a book line uses this list. Removing or renaming a medicine leaves book lines already saved as they are.</p>
+      <p class="help-text" id="items-empty" hidden>No medicines yet.</p>
+      <div class="item-table-wrap" id="item-table-wrap" hidden>
+        <table class="ov-table">
+          <caption class="sr-only">Medicines</caption>
+          <thead>
+            <tr>
+              <th scope="col">Medicine</th>
+              <th scope="col">Strength</th>
+              <th scope="col">Form</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="item-list"></tbody>
+        </table>
+      </div>
     </div>
   </form>
 </dialog>
@@ -1616,8 +1691,9 @@
    days    — one record per YYYY-MM-DD
    kv      — settings
    backups — the last 7 to 14 full JSON snapshots
-   book    — out-of-stock follow-up lines. item is the medicine name.
-   items   — the medicine catalogue. Book lines store the name, not the id.
+   book    — out-of-stock follow-up lines. item is the medicine label.
+   items   — medicine catalogue: name, optional strength, optional form.
+             Book lines store the label, not the id.
    Schema 2 adds the book store. Schema 3 adds the items store.
    Missing day keys are filled on load.
    Bump DB_VERSION only when a stored shape must be rewritten. */
@@ -1625,7 +1701,9 @@
 var DB_NAME = "montebello-stats";
 var DB_VERSION = 3;
 var SESSION_DATE_KEY = "montebello-stats-date";
+var BOOK_FILTER_KEY = "montebello-stats-book";
 var THEME_KEY = "montebello-stats-theme";
+var ITEM_FORMS = ["tablet", "capsule", "syrup", "suspension", "cream", "ointment", "injection", "drops", "inhaler", "other"];
 
 /* Paper columns. Acute "5+" means 5 or more items. Chronic "9+" means 9 or more.
    Add a group here if the original sheet had another column.
@@ -2731,7 +2809,7 @@ function normalizeBook(raw) {
     date: date,
     name: typeof raw.name === "string" ? raw.name.trim().slice(0, 120) : "",
     contact: typeof raw.contact === "string" ? raw.contact.trim().slice(0, 40) : "",
-    item: typeof raw.item === "string" ? raw.item.trim().slice(0, 160) : "",
+    item: typeof raw.item === "string" ? raw.item.trim().slice(0, 260) : "",
     collected: collected,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString()
@@ -2754,19 +2832,130 @@ function findBook(id) {
   return null;
 }
 
+function bookVisible(lines, opts) {
+  var mode = opts && opts.mode ? opts.mode : "day";
+  var q = String(opts && opts.query || "").trim().toLowerCase();
+  var status = opts && opts.status ? opts.status : "any";
+  var out = [];
+  var source = lines || [];
+  for (var i = 0; i < source.length; i++) {
+    var line = source[i];
+    if (!line) continue;
+    if (mode === "day" && line.date !== opts.day) continue;
+    if (mode === "range") {
+      if (opts.from && line.date < opts.from) continue;
+      if (opts.to && line.date > opts.to) continue;
+    }
+    if (status === "waiting" && line.collected) continue;
+    if (status === "collected" && !line.collected) continue;
+    if (q) {
+      var hay = (line.name + " " + line.contact + " " + line.item).toLowerCase();
+      if (hay.indexOf(q) < 0) continue;
+    }
+    out.push(line);
+  }
+  out.sort(function (a, b) {
+    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+    return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+  });
+  return out;
+}
+
+function readBookFilter() {
+  var scope = document.querySelector('input[name="book-scope"]:checked');
+  var from = document.getElementById("book-from");
+  var to = document.getElementById("book-to");
+  var search = document.getElementById("book-search");
+  var status = document.getElementById("book-status");
+  var mode = scope && (scope.value === "range" || scope.value === "all") ? scope.value : "day";
+  var statusValue = status && (status.value === "waiting" || status.value === "collected") ? status.value : "any";
+  return {
+    mode: mode,
+    from: from ? from.value : "",
+    to: to ? to.value : "",
+    query: search ? search.value : "",
+    status: statusValue,
+    day: state.currentDate
+  };
+}
+
+function bookFilterHead(filter) {
+  if (filter.mode === "all") return "All days";
+  if (filter.mode === "range") {
+    if (filter.from && filter.to) return formatDate(filter.from) + " \u2013 " + formatDate(filter.to);
+    if (filter.from) return "From " + formatDate(filter.from);
+    if (filter.to) return "To " + formatDate(filter.to);
+    return "Date range";
+  }
+  return formatDate(filter.day);
+}
+
+function syncBookRange() {
+  var range = document.getElementById("book-range");
+  var scope = document.querySelector('input[name="book-scope"]:checked');
+  if (range) range.hidden = !scope || scope.value !== "range";
+}
+
+function persistBookFilter() {
+  var filter = readBookFilter();
+  try {
+    sessionStorage.setItem(BOOK_FILTER_KEY, JSON.stringify({
+      mode: filter.mode,
+      from: filter.from,
+      to: filter.to,
+      query: filter.query,
+      status: filter.status
+    }));
+  } catch (err) {}
+}
+
+function restoreBookFilter() {
+  var raw = "";
+  try { raw = sessionStorage.getItem(BOOK_FILTER_KEY) || ""; } catch (err) {}
+  if (!raw) {
+    syncBookRange();
+    return;
+  }
+  var saved;
+  try { saved = JSON.parse(raw); } catch (err) { return; }
+  if (!saved || typeof saved !== "object") return;
+  var mode = saved.mode === "range" || saved.mode === "all" ? saved.mode : "day";
+  var radio = document.querySelector('input[name="book-scope"][value="' + mode + '"]');
+  if (radio) radio.checked = true;
+  var from = document.getElementById("book-from");
+  var to = document.getElementById("book-to");
+  var search = document.getElementById("book-search");
+  var status = document.getElementById("book-status");
+  if (from && /^\d{4}-\d{2}-\d{2}$/.test(saved.from || "")) from.value = saved.from;
+  if (to && /^\d{4}-\d{2}-\d{2}$/.test(saved.to || "")) to.value = saved.to;
+  if (search && typeof saved.query === "string") search.value = saved.query.slice(0, 160);
+  if (status && (saved.status === "waiting" || saved.status === "collected" || saved.status === "any")) status.value = saved.status;
+  syncBookRange();
+}
+
 function renderBook() {
   var body = document.getElementById("book-body");
   var count = document.getElementById("book-count");
   if (!body) return;
-  var lines = (state.book || []).slice().sort(function (a, b) {
-    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
-    return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+  var filter = readBookFilter();
+  var inScope = bookVisible(state.book || [], {
+    mode: filter.mode,
+    day: filter.day,
+    from: filter.from,
+    to: filter.to,
+    query: "",
+    status: "any"
   });
+  var lines = bookVisible(state.book || [], filter);
   var waiting = 0;
   for (var w = 0; w < lines.length; w++) if (!lines[w].collected) waiting++;
   if (count) {
-    if (!lines.length) count.textContent = "No lines yet.";
-    else count.textContent = waiting + " waiting · " + (lines.length - waiting) + " collected";
+    if (!lines.length && !inScope.length) {
+      if (filter.mode === "range") count.textContent = "No lines in this range.";
+      else if (filter.mode === "all") count.textContent = "No lines yet.";
+      else count.textContent = "No lines for this day.";
+    } else if (!lines.length) count.textContent = "No lines match these filters.";
+    else count.textContent = bookFilterHead(filter) + " \u00b7 " + waiting + " waiting \u00b7 " + (lines.length - waiting) + " collected";
   }
   body.replaceChildren();
   if (!lines.length) {
@@ -2774,7 +2963,11 @@ function renderBook() {
     var cell = document.createElement("td");
     cell.colSpan = 6;
     cell.className = "ov-empty";
-    cell.textContent = "No lines yet. Add one when something is out of stock.";
+    if (!inScope.length) {
+      if (filter.mode === "range") cell.textContent = "No lines in this range.";
+      else if (filter.mode === "all") cell.textContent = "No lines yet. Add one when something is out of stock.";
+      else cell.textContent = "No lines for this day.";
+    } else cell.textContent = "No lines match these filters.";
     empty.appendChild(cell);
     body.appendChild(empty);
     return;
@@ -2839,11 +3032,11 @@ async function saveBookFromForm() {
   var contact = document.getElementById("book-contact").value;
   var item = resolvedBookItem(document.getElementById("book-item").value);
   if (item === null) {
-    toast("Choose an item from the list, or add it under Items.");
+    toast("Choose a medicine from the list, or add it under Items.");
     return;
   }
   if (!name.trim() && !item) {
-    toast("Enter a patient name or an item.");
+    toast("Enter a patient name or a medicine.");
     return;
   }
   var existing = bookEditId ? findBook(bookEditId) : null;
@@ -2920,13 +3113,34 @@ async function applyBookImport(lines, mode) {
   await idbPutMany("book", writes);
 }
 
+function formLabel(form) {
+  if (!form) return "";
+  return form.charAt(0).toUpperCase() + form.slice(1);
+}
+
+function itemLabel(item) {
+  var parts = [item.name];
+  if (item.strength) parts.push(item.strength);
+  if (item.form) parts.push(formLabel(item.form));
+  return parts.join(" ");
+}
+
+function itemKey(item) {
+  return [item.name, item.strength || "", item.form || ""].join("\n").toLowerCase();
+}
+
 function normalizeItem(raw) {
   if (!raw || typeof raw !== "object") return null;
   var name = typeof raw.name === "string" ? raw.name.trim().slice(0, 160) : "";
   if (!name) return null;
+  var strength = typeof raw.strength === "string" ? raw.strength.trim().slice(0, 80) : "";
+  var form = typeof raw.form === "string" ? raw.form.trim().toLowerCase() : "";
+  if (ITEM_FORMS.indexOf(form) < 0) form = "";
   return {
     id: typeof raw.id === "string" && raw.id ? raw.id : uid(),
     name: name,
+    strength: strength,
+    form: form,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString()
   };
@@ -2939,7 +3153,11 @@ function itemsForBackup() {
     var item = normalizeItem(source[i]);
     if (item) items.push(item);
   }
-  items.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0; });
+  items.sort(function (a, b) {
+    var left = itemLabel(a).toLowerCase();
+    var right = itemLabel(b).toLowerCase();
+    return left < right ? -1 : left > right ? 1 : 0;
+  });
   return items;
 }
 
@@ -2948,11 +3166,10 @@ function findItem(id) {
   return null;
 }
 
-function findItemByName(name) {
-  var key = String(name || "").trim().toLowerCase();
-  if (!key) return null;
+function findItemByKey(item) {
+  var key = itemKey(item);
   for (var i = 0; i < state.items.length; i++) {
-    if (state.items[i].name.toLowerCase() === key) return state.items[i];
+    if (itemKey(state.items[i]) === key) return state.items[i];
   }
   return null;
 }
@@ -2962,9 +3179,10 @@ function matchItemNames(items, query, limit) {
   var matches = [];
   var source = items || [];
   for (var i = 0; i < source.length; i++) {
-    var name = source[i] && source[i].name ? source[i].name : "";
-    if (!name) continue;
-    if (!q || name.toLowerCase().indexOf(q) >= 0) matches.push(name);
+    if (!source[i] || !source[i].name) continue;
+    var label = itemLabel(source[i]);
+    var hay = (label + " " + source[i].name + " " + (source[i].strength || "") + " " + (source[i].form || "")).toLowerCase();
+    if (!q || hay.indexOf(q) >= 0) matches.push(label);
   }
   matches.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0; });
   if (limit && matches.length > limit) matches = matches.slice(0, limit);
@@ -2974,8 +3192,15 @@ function matchItemNames(items, query, limit) {
 function resolvedBookItem(raw) {
   var text = String(raw || "").trim();
   if (!text) return "";
-  var found = findItemByName(text);
-  return found ? found.name : null;
+  var lower = text.toLowerCase();
+  var nameHits = [];
+  for (var i = 0; i < state.items.length; i++) {
+    var item = state.items[i];
+    if (itemLabel(item).toLowerCase() === lower) return itemLabel(item);
+    if (item.name.toLowerCase() === lower) nameHits.push(item);
+  }
+  if (nameHits.length === 1) return itemLabel(nameHits[0]);
+  return null;
 }
 
 function refreshItemList(query) {
@@ -2995,9 +3220,9 @@ function refreshItemList(query) {
       list.appendChild(option);
     }
     if (!hint) return;
-    var text = "Search the item list. Add a missing medicine under Items.";
-    if (!source.length) text = "No items yet. Add medicines under Items.";
-    else if (q && !matches.length) text = "No item matches. Add it under Items.";
+    var text = "Search the medicine list. Add a missing medicine under Items.";
+    if (!source.length) text = "No medicines yet. Add them under Items.";
+    else if (q && !matches.length) text = "No medicine matches. Add it under Items.";
     else if (q && matchItemNames(source, q, 13).length > 12) text = "Showing 12 matches. Keep typing.";
     if (hint.textContent !== text) hint.textContent = text;
   });
@@ -3014,42 +3239,53 @@ function queueItemSearch() {
 function resetItemForm() {
   itemEditId = "";
   var input = document.getElementById("item-name");
+  var strength = document.getElementById("item-strength");
+  var form = document.getElementById("item-form");
   var save = document.getElementById("item-save");
   var cancel = document.getElementById("item-cancel");
   if (input) input.value = "";
-  if (save) save.textContent = "Add item";
+  if (strength) strength.value = "";
+  if (form) form.value = "";
+  if (save) save.textContent = "Add medicine";
   if (cancel) cancel.hidden = true;
 }
 
 function renderItems() {
   var list = document.getElementById("item-list");
   var empty = document.getElementById("items-empty");
+  var wrap = document.getElementById("item-table-wrap");
   if (!list) return;
   var items = itemsForBackup();
   list.replaceChildren();
   if (empty) empty.hidden = items.length > 0;
+  if (wrap) wrap.hidden = items.length === 0;
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
-    var li = document.createElement("li");
-    var name = document.createElement("span");
-    name.textContent = item.name;
-    var actions = document.createElement("div");
-    actions.className = "book-actions";
+    var tr = document.createElement("tr");
+    function textCell(text) {
+      var td = document.createElement("td");
+      td.textContent = text;
+      return td;
+    }
+    tr.appendChild(textCell(item.name));
+    tr.appendChild(textCell(item.strength || ""));
+    tr.appendChild(textCell(item.form ? formLabel(item.form) : ""));
+    var actions = document.createElement("td");
     var edit = document.createElement("button");
     edit.type = "button";
     edit.className = "btn";
     edit.dataset.itemEdit = item.id;
     edit.textContent = "Edit";
-    edit.setAttribute("aria-label", "Edit " + item.name);
+    edit.setAttribute("aria-label", "Edit " + itemLabel(item));
     var remove = document.createElement("button");
     remove.type = "button";
     remove.className = "btn";
     remove.dataset.itemDelete = item.id;
     remove.textContent = "Remove";
-    remove.setAttribute("aria-label", "Remove " + item.name);
+    remove.setAttribute("aria-label", "Remove " + itemLabel(item));
     actions.append(edit, remove);
-    li.append(name, actions);
-    list.appendChild(li);
+    tr.appendChild(actions);
+    list.appendChild(tr);
   }
   var field = document.getElementById("book-item");
   refreshItemList(field ? field.value : "");
@@ -3069,10 +3305,14 @@ function beginItemEdit(id) {
   if (!item) return;
   itemEditId = item.id;
   var input = document.getElementById("item-name");
+  var strength = document.getElementById("item-strength");
+  var form = document.getElementById("item-form");
   var save = document.getElementById("item-save");
   var cancel = document.getElementById("item-cancel");
   if (input) input.value = item.name;
-  if (save) save.textContent = "Save item";
+  if (strength) strength.value = item.strength || "";
+  if (form) form.value = item.form || "";
+  if (save) save.textContent = "Save medicine";
   if (cancel) cancel.hidden = false;
   if (input) {
     input.focus();
@@ -3082,20 +3322,24 @@ function beginItemEdit(id) {
 
 async function saveItemFromForm() {
   var input = document.getElementById("item-name");
+  var strength = document.getElementById("item-strength");
+  var form = document.getElementById("item-form");
   var existing = itemEditId ? findItem(itemEditId) : null;
   var item = normalizeItem({
     id: existing ? existing.id : uid(),
     name: input ? input.value : "",
+    strength: strength ? strength.value : "",
+    form: form ? form.value : "",
     createdAt: existing ? existing.createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
   if (!item) {
-    toast("Enter an item name.");
+    toast("Enter a medicine name.");
     return;
   }
-  var clash = findItemByName(item.name);
+  var clash = findItemByKey(item);
   if (clash && clash.id !== item.id) {
-    toast("That item is already in the list.");
+    toast("That medicine is already in the list.");
     return;
   }
   if (existing) {
@@ -3109,7 +3353,7 @@ async function saveItemFromForm() {
   }
   resetItemForm();
   renderItems();
-  toast(existing ? "Item updated." : "Item added.");
+  toast(existing ? "Medicine updated." : "Medicine added.");
 }
 
 async function deleteItem(id) {
@@ -3117,7 +3361,7 @@ async function deleteItem(id) {
   if (!item) return;
   var ok = await ask({
     title: "Remove this item?",
-    message: "Remove " + item.name + " from the item list? Book lines that already use it stay as they are.",
+    message: "Remove " + itemLabel(item) + " from the medicine list? Book lines that already use it stay as they are.",
     buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Remove", danger: true }]
   });
   if (ok !== "ok") return;
@@ -4339,8 +4583,15 @@ function renderRow(slot, nowId) {
   time.className = "sticky-col c-time";
   var wrap = document.createElement("span");
   wrap.className = "slot-time";
-  wrap.textContent = slot.start + "\u2013" + slot.end;
+  var start = document.createElement("span");
+  start.className = "slot-start";
+  start.textContent = slot.start;
+  var end = document.createElement("span");
+  end.className = "slot-end";
+  end.textContent = slot.end;
+  wrap.append(start, end);
   time.appendChild(wrap);
+  time.setAttribute("aria-label", slot.start + " to " + slot.end);
   tr.appendChild(time);
   var leaves = tableLeaves();
   for (var i = 0; i < leaves.length; i++) {
@@ -5606,6 +5857,20 @@ function bind() {
   document.getElementById("view-book").addEventListener("click", function () { showView("book"); });
   document.getElementById("book-items").addEventListener("click", openItems);
   document.getElementById("book-add").addEventListener("click", function () { openBookEdit(""); });
+  document.getElementById("book-filters").addEventListener("submit", function (event) {
+    event.preventDefault();
+    persistBookFilter();
+    renderBook();
+  });
+  document.getElementById("book-filters").addEventListener("change", function () {
+    syncBookRange();
+    persistBookFilter();
+    renderBook();
+  });
+  document.getElementById("book-search").addEventListener("input", function () {
+    persistBookFilter();
+    renderBook();
+  });
   document.getElementById("book-item").addEventListener("input", queueItemSearch);
   document.getElementById("book-item").addEventListener("focus", queueItemSearch);
   document.getElementById("items-close").addEventListener("click", function () {
@@ -5651,12 +5916,12 @@ function bind() {
     }
     if (item === null) {
       event.preventDefault();
-      toast("Choose an item from the list, or add it under Items.");
+      toast("Choose a medicine from the list, or add it under Items.");
       return;
     }
     if (!name.trim() && !item) {
       event.preventDefault();
-      toast("Enter a patient name or an item.");
+      toast("Enter a patient name or a medicine.");
     }
   });
   document.getElementById("book-edit").addEventListener("close", function () {
@@ -5926,6 +6191,7 @@ function bind() {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
     if (state.settings && state.settings.theme === "device") applyTheme("device");
   });
+  restoreBookFilter();
 }
 
 function onSettingsChange(event) {
@@ -6107,6 +6373,27 @@ function selfTest() {
       var partial = buildExportObject([]);
       assert(partial.schema === 1 && partial.items == null && partial.book == null, "day export stays schema 1");
       state.items = [];
+      var shaped = normalizeItem({ name: "Amox", strength: " 500 mg ", form: "TABLET" });
+      assert(shaped.strength === "500 mg" && shaped.form === "tablet" && itemLabel(shaped) === "Amox 500 mg Tablet", "medicine fields");
+      assert(normalizeItem({ name: "Amox", form: "powder" }).form === "", "unknown form dropped");
+      var twin = normalizeItem({ id: "t2", name: "Amox", strength: "250 mg", form: "capsule" });
+      state.items = [shaped, twin];
+      assert(resolvedBookItem("Amox") === null, "shared name needs the full label");
+      assert(resolvedBookItem("Amox 500 mg Tablet") === "Amox 500 mg Tablet", "full label");
+      state.items = [shaped];
+      assert(resolvedBookItem("amox") === "Amox 500 mg Tablet", "single name fills the label");
+      var bookLines = [
+        normalizeBook({ date: "2026-11-03", name: "Ada", contact: "1", item: "Amox", collected: "" }),
+        normalizeBook({ date: "2026-11-01", name: "Bea", contact: "2", item: "Para", collected: "2026-11-02" }),
+        normalizeBook({ date: "2026-11-03", name: "Cara", contact: "3", item: "Amox", collected: "2026-11-03" })
+      ];
+      var page = bookVisible(bookLines, { mode: "day", day: "2026-11-03", status: "any" });
+      assert(page.length === 2 && page[0].name === "Ada" && page[1].name === "Cara", "book day page");
+      assert(bookVisible(bookLines, { mode: "day", day: "2026-11-03", status: "waiting" }).length === 1, "book waiting");
+      assert(bookVisible(bookLines, { mode: "range", from: "2026-11-01", to: "2026-11-01" })[0].name === "Bea", "book range");
+      assert(bookVisible(bookLines, { mode: "all", query: "para" }).length === 1, "book search");
+      state.items = [];
+      state.book = [];
     },
     function backupDue() {
       var base = defaultSettings();
