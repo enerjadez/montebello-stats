@@ -483,7 +483,16 @@
   #settings { width: min(560px, calc(100vw - 24px)); }
   #days, #export, #book-edit { width: min(480px, calc(100vw - 24px)); }
   #items { width: min(680px, calc(100vw - 24px)); }
-  #confirm, #cell-edit { width: min(440px, calc(100vw - 24px)); }
+  #confirm, #cell-edit, #book-waiting { width: min(360px, calc(100vw - 24px)); }
+  #book-waiting form { margin: 0; padding: 18px; }
+  .book-waiting-count {
+    margin: 8px 0 4px;
+    font-size: 2.4rem;
+    font-weight: 750;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  #book-waiting-list { max-height: min(36dvh, 240px); overflow: auto; margin: 8px 0; }
   #table-edit { width: min(520px, calc(100vw - 24px)); }
   #table-edit .table-edit-actions .btn { flex: 1 1 0; }
   .hour-edit-wrap { max-height: min(42dvh, 320px); overflow: auto; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; }
@@ -525,7 +534,7 @@
     height: min(88dvh, 900px);
     overflow: hidden;
   }
-  #days[open], #export[open], #confirm[open], #book-edit[open], #items[open], #table-edit[open] { max-height: min(88dvh, 760px); overflow: auto; }
+  #days[open], #export[open], #confirm[open], #book-edit[open], #items[open], #table-edit[open], #book-waiting[open] { max-height: min(88dvh, 760px); overflow: auto; }
   .dialog-top {
     display: flex;
     justify-content: space-between;
@@ -705,7 +714,8 @@
   }
   .book-head h2 { margin: 0 0 4px; font-size: 1.05rem; }
   .book-head .help-text { margin: 0; max-width: 62ch; }
-  .book-count { margin: 0 0 8px; color: var(--muted); font-size: 0.85rem; }
+  .book-count-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
+  .book-count { margin: 0; color: var(--muted); font-size: 0.85rem; }
   .book-filters { margin: 0 0 10px; }
   .book-filters fieldset { margin: 0 0 8px; }
   .book-filters .choice-row { gap: 4px 16px; }
@@ -1377,7 +1387,10 @@
         </label>
       </div>
     </form>
-    <p id="book-count" class="book-count"></p>
+    <div class="book-count-row">
+      <p id="book-count" class="book-count"></p>
+      <button type="button" class="btn" id="book-waiting-open">Not collected</button>
+    </div>
     <div class="ov-table-wrap">
       <table class="ov-table book-table">
         <caption class="sr-only">Out of stock follow-up</caption>
@@ -1640,6 +1653,18 @@
       <button type="button" class="btn" id="cell-edit-plus">+1</button>
       <button type="submit" class="btn primary" value="save">Save</button>
       <button type="submit" class="btn" value="">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="book-waiting" aria-labelledby="book-waiting-title">
+  <form method="dialog">
+    <h2 id="book-waiting-title">Not collected</h2>
+    <p id="book-waiting-scope" class="help-text"></p>
+    <p id="book-waiting-count" class="book-waiting-count">0</p>
+    <ul id="book-waiting-list" class="plain-list"></ul>
+    <div class="dialog-actions">
+      <button type="submit" class="btn" value="" autofocus>Close</button>
     </div>
   </form>
 </dialog>
@@ -2916,6 +2941,17 @@ function bookVisible(lines, opts) {
   return out;
 }
 
+function bookWaitingLines(lines, opts) {
+  return bookVisible(lines || [], {
+    mode: opts && opts.mode,
+    day: opts && opts.day,
+    from: opts && opts.from,
+    to: opts && opts.to,
+    query: "",
+    status: "waiting"
+  });
+}
+
 function readBookFilter() {
   var scope = document.querySelector('input[name="book-scope"]:checked');
   var from = document.getElementById("book-from");
@@ -2988,10 +3024,38 @@ function restoreBookFilter() {
   syncBookRange();
 }
 
+function renderBookWaiting() {
+  var count = document.getElementById("book-waiting-count");
+  var scope = document.getElementById("book-waiting-scope");
+  var list = document.getElementById("book-waiting-list");
+  if (!count || !list) return;
+  var filter = readBookFilter();
+  var lines = bookWaitingLines(state.book || [], filter);
+  count.textContent = String(lines.length);
+  if (scope) scope.textContent = bookFilterHead(filter);
+  list.replaceChildren();
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var item = document.createElement("li");
+    var who = line.name || "No name";
+    var medicine = line.item ? " \u00b7 " + line.item : "";
+    var when = filter.mode === "day" ? "" : formatDate(line.date) + " \u00b7 ";
+    item.textContent = when + who + medicine;
+    list.appendChild(item);
+  }
+}
+
+function openBookWaiting() {
+  renderBookWaiting();
+  var dialog = document.getElementById("book-waiting");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
 function renderBook() {
   var body = document.getElementById("book-body");
   var count = document.getElementById("book-count");
   if (!body) return;
+  renderBookWaiting();
   var filter = readBookFilter();
   var inScope = bookVisible(state.book || [], {
     mode: filter.mode,
@@ -6053,6 +6117,7 @@ function bind() {
   document.getElementById("view-overview").addEventListener("click", function () { showView("overview"); });
   document.getElementById("view-book").addEventListener("click", function () { showView("book"); });
   document.getElementById("book-items").addEventListener("click", openItems);
+  document.getElementById("book-waiting-open").addEventListener("click", openBookWaiting);
   document.getElementById("book-add").addEventListener("click", function () { openBookEdit(""); });
   document.getElementById("book-filters").addEventListener("submit", function (event) {
     event.preventDefault();
@@ -6589,6 +6654,8 @@ function selfTest() {
       var page = bookVisible(bookLines, { mode: "day", day: "2026-11-03", status: "any" });
       assert(page.length === 2 && page[0].name === "Ada" && page[1].name === "Cara", "book day page");
       assert(bookVisible(bookLines, { mode: "day", day: "2026-11-03", status: "waiting" }).length === 1, "book waiting");
+      assert(bookWaitingLines(bookLines, { mode: "day", day: "2026-11-03" }).length === 1, "not collected for the day");
+      assert(bookWaitingLines(bookLines, { mode: "range", from: "2026-11-01", to: "2026-11-03" }).length === 1, "not collected for the range");
       assert(bookVisible(bookLines, { mode: "range", from: "2026-11-01", to: "2026-11-01" })[0].name === "Bea", "book range");
       assert(bookVisible(bookLines, { mode: "all", query: "para" }).length === 1, "book search");
       state.items = [];
