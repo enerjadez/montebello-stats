@@ -192,6 +192,14 @@
     align-items: flex-start;
     padding: 14px 16px 6px;
   }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-copy { min-width: 0; }
+  .brand-mark {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 auto;
+    color: var(--accent);
+  }
   .eyebrow {
     margin: 0;
     color: var(--accent);
@@ -475,7 +483,9 @@
   #settings { width: min(560px, calc(100vw - 24px)); }
   #days, #export, #book-edit { width: min(480px, calc(100vw - 24px)); }
   #items { width: min(680px, calc(100vw - 24px)); }
-  #confirm, #cell-edit { width: min(440px, calc(100vw - 24px)); }
+  #confirm, #cell-edit, #table-edit { width: min(440px, calc(100vw - 24px)); }
+  #table-edit .dialog-actions { flex-direction: column; }
+  #table-edit .dialog-actions .btn { width: 100%; }
   #cell-edit form, #book-edit form, #items form { margin: 0; }
   #cell-edit form { padding: 18px; }
   #cell-edit input {
@@ -891,6 +901,7 @@
     }
     .top { align-items: center; padding: 10px 12px 2px; }
     .eyebrow, #report-title { display: none; }
+    .brand-mark { width: 40px; height: 40px; }
     h1 { font-size: 1.05rem; }
     .save { min-height: 32px; font-size: 0.75rem; }
     .day-nav { gap: 6px; padding: 2px 8px 4px; }
@@ -1002,6 +1013,7 @@
   body.is-tablet #fold-hours > summary,
   body.is-tablet .table-full { display: none; }
   body.is-tablet .top { align-items: center; padding: 8px 16px 2px; }
+  body.is-tablet .brand-mark { width: 40px; height: 40px; }
   body.is-tablet h1 { font-size: 1.05rem; }
   body.is-tablet .day-nav { padding-bottom: 4px; }
   body.is-tablet .view-nav { padding-bottom: 6px; }
@@ -1075,6 +1087,7 @@
     .app { display: block; max-width: none; padding: 0; }
     .top { padding: 0 0 2px; }
     .eyebrow { display: block !important; }
+    .brand-mark { width: 28px; height: 28px; }
     h1 { font-size: 14pt; }
     #report-title { display: block !important; font-size: 9pt; margin: 0; }
     .day-nav { padding: 0 0 6px; }
@@ -1165,9 +1178,16 @@
 <div class="app">
   <header class="top">
     <div class="brand">
-      <p class="eyebrow">Montebello Hospital · Pharmacy</p>
-      <h1>Montebello Stats</h1>
-      <p id="report-title">Hourly outpatient statistics – prescription and patient volumes</p>
+      <svg class="brand-mark" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 58V28L32 8l24 20v30"/>
+        <path d="M26 58V44h12v16"/>
+        <path d="M32 30v12M26 36h12"/>
+      </svg>
+      <div class="brand-copy">
+        <p class="eyebrow">Montebello Hospital · Pharmacy</p>
+        <h1>Montebello Stats</h1>
+        <p id="report-title">Hourly outpatient statistics – prescription and patient volumes</p>
+      </div>
     </div>
     <div class="top-actions no-print">
       <p id="save-status" class="save" role="status"><span class="dot" aria-hidden="true"></span><span id="save-text">Saved</span></p>
@@ -1441,13 +1461,11 @@
         <button type="button" class="btn" id="sheet-backup">Backup</button>
       </div>
       <div class="day-extra">
-        <button type="button" class="btn" id="add-hour">Add hour</button>
-        <button type="button" class="btn" id="now-btn">This hour</button>
-        <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
+        <button type="button" class="btn" id="open-table-edit">Edit table</button>
       </div>
       <details class="help">
         <summary>How to record</summary>
-        <p>Each row is one hour. Tap a count to type it or add 1. Cancel puts that count back. Notes stays folded until you open the pen. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
+        <p>Each row is one hour. Tap a count to type it or add 1. Cancel puts that count back. Notes stays folded until you open the pen. Edit table adds an hour, jumps to this hour, or clears the numbers. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
       </details>
     </section>
     <section class="settings-section">
@@ -1567,6 +1585,21 @@
     <div class="dialog-actions">
       <button type="button" class="btn primary" id="export-download">Download</button>
       <button type="button" class="btn" id="export-email">Email</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="table-edit" aria-labelledby="table-edit-title">
+  <div class="dialog-top">
+    <h2 id="table-edit-title">Edit table</h2>
+    <button type="button" class="btn" id="table-edit-close">Close</button>
+  </div>
+  <div class="dialog-body">
+    <p class="help-text">Add an hour, jump to the hour that covers now, or clear the numbers on this day. Clearing leaves the hours in place.</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="add-hour">Add hour</button>
+      <button type="button" class="btn" id="now-btn">This hour</button>
+      <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
     </div>
   </div>
 </dialog>
@@ -5368,6 +5401,16 @@ async function jumpToNow() {
   focusSlot(id);
 }
 
+function closeDialog(id) {
+  var dialog = document.getElementById(id);
+  if (dialog && dialog.open) dialog.close();
+}
+
+function openTableEdit() {
+  var dialog = document.getElementById("table-edit");
+  if (!dialog.open) dialog.showModal();
+}
+
 function openSettings() {
   fillSettingsForm();
   renderBackupList();
@@ -5804,14 +5847,27 @@ function bind() {
   document.getElementById("top-prev").addEventListener("click", function () { stepDay(-1); });
   document.getElementById("top-next").addEventListener("click", function () { stepDay(1); });
   document.getElementById("today-btn").addEventListener("click", function () { setDate(localISODate(new Date())); });
-  document.getElementById("now-btn").addEventListener("click", function () { jumpToNow(); });
+  document.getElementById("open-table-edit").addEventListener("click", openTableEdit);
+  document.getElementById("table-edit-close").addEventListener("click", function () { closeDialog("table-edit"); });
+  document.getElementById("now-btn").addEventListener("click", function () {
+    closeDialog("table-edit");
+    closeDialog("settings");
+    jumpToNow();
+  });
   document.getElementById("work-date").addEventListener("change", function (event) {
     if (event.target.value) setDate(event.target.value);
   });
-  document.getElementById("add-hour").addEventListener("click", addHour);
+  document.getElementById("add-hour").addEventListener("click", function () {
+    closeDialog("table-edit");
+    closeDialog("settings");
+    addHour();
+  });
   document.getElementById("empty-copy").addEventListener("click", copyPrevious);
   document.getElementById("empty-start").addEventListener("click", startFresh);
-  document.getElementById("clear-numbers").addEventListener("click", clearNumbers);
+  document.getElementById("clear-numbers").addEventListener("click", function () {
+    closeDialog("table-edit");
+    clearNumbers();
+  });
   document.getElementById("open-export").addEventListener("click", openExport);
   document.getElementById("print-btn").addEventListener("click", function () { window.print(); });
   var tableFull = document.getElementById("table-full");
