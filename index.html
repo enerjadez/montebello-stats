@@ -483,9 +483,18 @@
   #settings { width: min(560px, calc(100vw - 24px)); }
   #days, #export, #book-edit { width: min(480px, calc(100vw - 24px)); }
   #items { width: min(680px, calc(100vw - 24px)); }
-  #confirm, #cell-edit, #table-edit { width: min(440px, calc(100vw - 24px)); }
-  #table-edit .dialog-actions { flex-direction: column; }
-  #table-edit .dialog-actions .btn { width: 100%; }
+  #confirm, #cell-edit { width: min(440px, calc(100vw - 24px)); }
+  #table-edit { width: min(520px, calc(100vw - 24px)); }
+  #table-edit .table-edit-actions .btn { flex: 1 1 0; }
+  .hour-edit-wrap { max-height: min(42dvh, 320px); overflow: auto; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; }
+  .hour-edit { width: 100%; border-collapse: collapse; }
+  .hour-edit th, .hour-edit td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  .hour-edit th:last-child, .hour-edit td:last-child { text-align: right; white-space: nowrap; }
+  .hour-edit .btn { min-height: 36px; padding: 0 10px; }
+  .hour-edit .btn + .btn { margin-left: 6px; }
+  .hour-flag { color: var(--muted); font-size: 0.75rem; font-weight: 500; }
+  .hour-times { display: flex; gap: 8px; }
+  .hour-times .field { margin: 0; flex: 1 1 0; font-size: 0.8rem; }
   #cell-edit form, #book-edit form, #items form { margin: 0; }
   #cell-edit form { padding: 18px; }
   #cell-edit input {
@@ -516,7 +525,7 @@
     height: min(88dvh, 900px);
     overflow: hidden;
   }
-  #days[open], #export[open], #confirm[open], #book-edit[open], #items[open] { max-height: min(88dvh, 760px); overflow: auto; }
+  #days[open], #export[open], #confirm[open], #book-edit[open], #items[open], #table-edit[open] { max-height: min(88dvh, 760px); overflow: auto; }
   .dialog-top {
     display: flex;
     justify-content: space-between;
@@ -530,6 +539,9 @@
   #settings .dialog-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; padding-bottom: 42px; }
   .settings-section { margin: 16px 0; }
   .settings-section h3 { margin: 0 0 8px; font-size: 0.95rem; }
+  #settings .settings-section { margin: 0; padding: 14px 0; }
+  #settings .settings-section + .settings-section { border-top: 1px solid var(--line); }
+  #settings .danger-zone { margin-top: 14px; border-top: 0; }
   .help-text { color: var(--muted); font-size: 0.82rem; margin: 4px 0 0; line-height: 1.4; }
   .field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 0.92rem; }
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -1443,10 +1455,6 @@
     <section class="settings-section">
       <h3>This day</h3>
       <div class="summary" id="summary" aria-live="polite" aria-label="Day totals"></div>
-      <p class="help-text" id="settings-day-totals">Totals for the day open on the sheet.</p>
-    </section>
-    <section class="settings-section">
-      <h3>Day tools</h3>
       <div class="row-2">
         <label class="field">Date
           <input type="date" id="work-date">
@@ -1459,13 +1467,11 @@
         <button type="button" class="btn" id="open-export">Export</button>
         <button type="button" class="btn" id="print-btn">Print</button>
         <button type="button" class="btn" id="sheet-backup">Backup</button>
-      </div>
-      <div class="day-extra">
         <button type="button" class="btn" id="open-table-edit">Edit table</button>
       </div>
       <details class="help">
         <summary>How to record</summary>
-        <p>Each row is one hour. Tap a count to type it or add 1. Cancel puts that count back. Notes stays folded until you open the pen. Edit table adds an hour, jumps to this hour, or clears the numbers. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
+        <p>Each row is one hour. Tap a count to type it or add 1. Cancel puts that count back. Notes stays folded until you open the pen. Edit table changes the hours on this day. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
       </details>
     </section>
     <section class="settings-section">
@@ -1484,7 +1490,7 @@
         <label class="field">End<input type="time" id="day-end" step="60"></label>
       </div>
       <p id="day-bounds-error" class="help-text" hidden>End time must be after the start time.</p>
-      <p class="help-text">Used when you start a fresh day. Days you already saved stay as they are.</p>
+      <p class="help-text">New days use these hours. Days already saved stay as they are.</p>
     </section>
     <section class="settings-section">
       <h3>Export</h3>
@@ -1507,14 +1513,14 @@
           </select>
         </label>
       </div>
-      <p class="help-text">CSV dates stay YYYY-MM-DD so Excel cannot swap the day and the month. Excel files use the date format you pick.</p>
+      <p class="help-text">CSV dates stay YYYY-MM-DD. Excel uses the date format above.</p>
     </section>
     <section class="settings-section">
       <h3>Email</h3>
-      <label class="field">Email address<input type="email" id="email" autocomplete="email" placeholder="name@example.com"></label>
+      <label class="field">Email address<input type="email" id="email" autocomplete="email"></label>
       <p id="email-error" class="help-text" hidden>Enter a full email address, or leave it blank.</p>
       <button type="button" class="btn" id="email-backup">Email full history</button>
-      <p class="help-text">Sends every saved day in the export format you chose. On a phone, the share sheet can attach the file. Otherwise the file downloads and your email app opens so you can attach it.</p>
+      <p class="help-text">Uses the export format above. On a phone the share sheet can attach the file.</p>
     </section>
     <section class="settings-section">
       <h3>Daily backup</h3>
@@ -1529,8 +1535,7 @@
       <div class="choice-row">
         <button type="button" class="btn primary" id="backup-now">Backup now</button>
       </div>
-      <p class="help-text">When this page is open at the backup time, or the next time you open it that day, a full history file is written to Downloads as Montebello-Stats-Backup-YYYY-MM-DD.json. A copy is also kept here so you can download it again. A closed page cannot back itself up, so open the file at least once each day.</p>
-      <p class="help-text">Keep this file’s name and folder the same. Saved statistics are tied to this file’s location. If you rename or move it, the days will not show until you move it back or restore a JSON backup.</p>
+      <p class="help-text">If this page is open at that time, or the next time you open it that day, the full history is saved to Downloads. A closed page cannot run it. Keep this file’s name and folder. Saved days are tied to this location.</p>
       <h3>Backups kept in this app</h3>
       <ul id="backup-list" class="plain-list"></ul>
       <label class="field">Restore from a JSON file<input type="file" id="import-file" accept="application/json,.json"></label>
@@ -1540,7 +1545,6 @@
       <p class="help-text">Deletes every saved day in this browser. The out of stock book and the item list stay. Files already in Downloads, and the backup copies above, stay.</p>
       <button type="button" class="btn danger" id="erase-all">Erase all days</button>
     </section>
-    <p class="help-text">Montebello Stats · schema 1 · works offline in this file</p>
   </div>
   <div class="star-sticker" aria-hidden="true">
     <svg viewBox="0 0 64 64" width="36" height="36">
@@ -1595,11 +1599,24 @@
     <button type="button" class="btn" id="table-edit-close">Close</button>
   </div>
   <div class="dialog-body">
-    <p class="help-text">Add an hour, jump to the hour that covers now, or clear the numbers on this day. Clearing leaves the hours in place.</p>
-    <div class="dialog-actions">
+    <p id="table-edit-day" class="help-text"></p>
+    <div class="dialog-actions table-edit-actions">
       <button type="button" class="btn" id="add-hour">Add hour</button>
       <button type="button" class="btn" id="now-btn">This hour</button>
       <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
+    </div>
+    <p class="help-text" id="table-edit-empty" hidden>No hours on this day yet.</p>
+    <div class="hour-edit-wrap" id="table-edit-hours-wrap" hidden>
+      <table class="hour-edit">
+        <caption class="sr-only">Hours on this day</caption>
+        <thead>
+          <tr>
+            <th scope="col">Hour</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="table-edit-hours"></tbody>
+      </table>
     </div>
   </div>
 </dialog>
@@ -1769,6 +1786,7 @@ var state = {
 };
 var cellEdit = { slotId: "", groupId: "", key: "", origin: null };
 var bookEditId = "";
+var hourEditId = "";
 var itemEditId = "";
 var itemSearchTimer = 0;
 var itemSearchSeq = 0;
@@ -1837,6 +1855,10 @@ function validTime(v) {
   var m = Number(match[2]);
   if (h > 23 || m > 59) return null;
   return match[1] + ":" + match[2];
+}
+
+function hoursOverlap(start, end, otherStart, otherEnd) {
+  return start < otherEnd && otherStart < end;
 }
 
 function addMinutes(hhmm, mins) {
@@ -4728,8 +4750,6 @@ function renderChrome() {
   var backup = document.getElementById("backup-status");
   backup.textContent = when ? "Last backup " + formatWhen(when) : "No backup yet";
   backup.title = "Full history JSON saved to Downloads and kept in Settings.";
-  var totalsLine = document.getElementById("settings-day-totals");
-  if (totalsLine) totalsLine.textContent = "Totals for " + dayLabel + ".";
   document.body.dataset.view = book ? "book" : overview ? "overview" : "sheet";
   var sheet = document.getElementById("sheet");
   var overviewEl = document.getElementById("overview");
@@ -4756,6 +4776,8 @@ function renderAll() {
   if (daysDialog && daysDialog.open) renderDayList();
   if (state.view === "overview") renderOverview();
   renderBook();
+  var tableEdit = document.getElementById("table-edit");
+  if (tableEdit && tableEdit.open) renderTableHours();
   placeTabletTable();
 }
 
@@ -4929,7 +4951,8 @@ function addHour() {
   day.slots.push(slot);
   scheduleSave();
   renderAll();
-  focusSlot(slot.id);
+  var tableEdit = document.getElementById("table-edit");
+  if (!tableEdit || !tableEdit.open) focusSlot(slot.id);
 }
 
 async function startFresh() {
@@ -5406,7 +5429,116 @@ function closeDialog(id) {
   if (dialog && dialog.open) dialog.close();
 }
 
+function renderTableHours() {
+  var body = document.getElementById("table-edit-hours");
+  var empty = document.getElementById("table-edit-empty");
+  var wrap = document.getElementById("table-edit-hours-wrap");
+  var dayLine = document.getElementById("table-edit-day");
+  if (!body) return;
+  var day = currentDay();
+  var slots = day && day.slots ? day.slots : [];
+  if (dayLine) {
+    var countLabel = slots.length ? slots.length + (slots.length === 1 ? " hour" : " hours") : "no hours yet";
+    dayLine.textContent = weekday(state.currentDate) + " " + formatDate(state.currentDate) + " \u00b7 " + countLabel;
+  }
+  if (empty) empty.hidden = slots.length > 0;
+  if (wrap) wrap.hidden = slots.length === 0;
+  body.replaceChildren();
+  for (var i = 0; i < slots.length; i++) body.appendChild(hourEditRow(slots[i]));
+}
+
+function hourEditRow(slot) {
+  var tr = document.createElement("tr");
+  if (slot.id === hourEditId) {
+    var fields = document.createElement("td");
+    var times = document.createElement("div");
+    times.className = "hour-times";
+    function timeField(label, value) {
+      var wrapLabel = document.createElement("label");
+      wrapLabel.className = "field";
+      wrapLabel.appendChild(document.createTextNode(label));
+      var input = document.createElement("input");
+      input.type = "time";
+      input.step = "60";
+      input.value = value;
+      input.dataset.hourField = label === "Start" ? "start" : "end";
+      wrapLabel.appendChild(input);
+      return wrapLabel;
+    }
+    times.append(timeField("Start", slot.start), timeField("End", slot.end));
+    fields.appendChild(times);
+    var editing = document.createElement("td");
+    var save = document.createElement("button");
+    save.type = "button";
+    save.className = "btn primary";
+    save.dataset.hourSave = slot.id;
+    save.textContent = "Save";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "btn";
+    cancel.dataset.hourCancel = slot.id;
+    cancel.textContent = "Cancel";
+    editing.append(save, cancel);
+    tr.append(fields, editing);
+    return tr;
+  }
+  var time = document.createElement("td");
+  time.textContent = slot.start + "\u2013" + slot.end;
+  if (slotHasData(slot)) {
+    var flag = document.createElement("span");
+    flag.className = "hour-flag";
+    flag.textContent = " \u00b7 has numbers";
+    time.appendChild(flag);
+  }
+  var actions = document.createElement("td");
+  var edit = document.createElement("button");
+  edit.type = "button";
+  edit.className = "btn";
+  edit.dataset.hourEdit = slot.id;
+  edit.textContent = "Edit";
+  edit.setAttribute("aria-label", "Edit " + slot.start + " to " + slot.end);
+  var remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "btn";
+  remove.dataset.hourRemove = slot.id;
+  remove.textContent = "Remove";
+  remove.setAttribute("aria-label", "Remove " + slot.start + " to " + slot.end);
+  actions.append(edit, remove);
+  tr.append(time, actions);
+  return tr;
+}
+
+function saveHourTimes(id) {
+  var day = currentDay();
+  var slot = findSlot(id);
+  var dialog = document.getElementById("table-edit");
+  if (!day || !slot || !dialog) return;
+  var startInput = dialog.querySelector('[data-hour-field="start"]');
+  var endInput = dialog.querySelector('[data-hour-field="end"]');
+  var start = validTime(startInput ? startInput.value : "");
+  var end = validTime(endInput ? endInput.value : "");
+  if (!start || !end || !(start < end)) {
+    toast("End time must be after the start time.");
+    return;
+  }
+  for (var i = 0; i < day.slots.length; i++) {
+    var other = day.slots[i];
+    if (other.id !== id && hoursOverlap(start, end, other.start, other.end)) {
+      toast("That hour overlaps " + other.start + "\u2013" + other.end + ".");
+      return;
+    }
+  }
+  slot.start = start;
+  slot.end = end;
+  day.slots.sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : 0; });
+  hourEditId = "";
+  scheduleSave();
+  renderAll();
+}
+
 function openTableEdit() {
+  hourEditId = "";
+  renderTableHours();
   var dialog = document.getElementById("table-edit");
   if (!dialog.open) dialog.showModal();
 }
@@ -5849,6 +5981,19 @@ function bind() {
   document.getElementById("today-btn").addEventListener("click", function () { setDate(localISODate(new Date())); });
   document.getElementById("open-table-edit").addEventListener("click", openTableEdit);
   document.getElementById("table-edit-close").addEventListener("click", function () { closeDialog("table-edit"); });
+  document.getElementById("table-edit").addEventListener("close", function () { hourEditId = ""; });
+  document.getElementById("table-edit-hours").addEventListener("click", function (event) {
+    var el = eventEl(event);
+    if (!el || !el.closest) return;
+    var edit = el.closest("[data-hour-edit]");
+    if (edit) { hourEditId = edit.dataset.hourEdit; renderTableHours(); return; }
+    var remove = el.closest("[data-hour-remove]");
+    if (remove) { removeSlot(remove.dataset.hourRemove); return; }
+    var save = el.closest("[data-hour-save]");
+    if (save) { saveHourTimes(save.dataset.hourSave); return; }
+    var cancel = el.closest("[data-hour-cancel]");
+    if (cancel) { hourEditId = ""; renderTableHours(); }
+  });
   document.getElementById("now-btn").addEventListener("click", function () {
     closeDialog("table-edit");
     closeDialog("settings");
@@ -5858,16 +6003,12 @@ function bind() {
     if (event.target.value) setDate(event.target.value);
   });
   document.getElementById("add-hour").addEventListener("click", function () {
-    closeDialog("table-edit");
-    closeDialog("settings");
+    hourEditId = "";
     addHour();
   });
   document.getElementById("empty-copy").addEventListener("click", copyPrevious);
   document.getElementById("empty-start").addEventListener("click", startFresh);
-  document.getElementById("clear-numbers").addEventListener("click", function () {
-    closeDialog("table-edit");
-    clearNumbers();
-  });
+  document.getElementById("clear-numbers").addEventListener("click", clearNumbers);
   document.getElementById("open-export").addEventListener("click", openExport);
   document.getElementById("print-btn").addEventListener("click", function () { window.print(); });
   var tableFull = document.getElementById("table-full");
@@ -6382,6 +6523,8 @@ function selfTest() {
       var slots = defaultSlots(defaultSettings());
       assert(slots.length === 9, "nine default hours");
       assert(slots[0].start === "07:00" && slots[0].end === "08:00", "first hour");
+      assert(hoursOverlap("07:00", "08:00", "07:30", "08:30") === true, "hours overlap");
+      assert(hoursOverlap("07:00", "08:00", "08:00", "09:00") === false, "hours touch");
       assert(slots[8].start === "15:00" && slots[8].end === "16:00", "last hour");
       assert(COLUMN_GROUPS[1].keys.join(",") === "1,2,3,4,5+", "acute keys");
       assert(COLUMN_GROUPS[2].keys.join(",") === "1,2,3,4,5,6,7,8,9+", "chronic keys");
