@@ -918,7 +918,6 @@
   }
   .tablet-stat span { display: block; color: var(--muted); font-size: 0.68rem; font-weight: 700; }
   .tablet-stat strong { display: block; margin-top: 1px; color: var(--ink); font-size: 1.05rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-  .tablet-insight { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.35; }
   html:has(body.is-tablet),
   body.is-tablet { height: 100dvh; overflow: hidden; }
   body.is-tablet .app {
@@ -1126,7 +1125,6 @@
   <div id="sheet" class="sheet">
   <div id="tablet-glance" class="tablet-glance no-print" hidden>
     <div id="tablet-stats" class="tablet-stats" aria-label="This day"></div>
-    <p id="tablet-insight" class="tablet-insight"></p>
   </div>
   <p class="scroll-hint no-print">Swipe sideways for acute, chronic, scripts and notes.</p>
   <div class="hours-pane">
@@ -2648,48 +2646,6 @@ function showView(name) {
   if (changed) window.scrollTo(0, 0);
 }
 
-function tabletInsight(day) {
-  if (!day || !day.slots.length) return "No hours on this day yet.";
-  var totals = dayTotals(day);
-  var best = null;
-  for (var i = 0; i < day.slots.length; i++) {
-    var slot = day.slots[i];
-    var patients = num(slot.values && slot.values.patients);
-    var scripts = rowScripts(slot);
-    var count = scripts == null ? 0 : scripts;
-    if (!best || patients > best.patients || (patients === best.patients && count > best.scripts)) {
-      best = {
-        label: String(slot.start || "").slice(0, 5) + "\u2013" + String(slot.end || "").slice(0, 5),
-        patients: patients,
-        scripts: count
-      };
-    }
-  }
-  var parts = [];
-  if (best && (best.patients || best.scripts)) parts.push("Busiest hour " + best.label + ", " + best.patients + " patients");
-  if (totals.groups.patients) {
-    var each = Math.round((totals.scripts / totals.groups.patients) * 10) / 10;
-    parts.push(each + " scripts per patient");
-  }
-  var end = state.currentDate;
-  var start = shiftDate(end, -6);
-  var weekPatients = 0;
-  var weekScripts = 0;
-  var weekDays = 0;
-  state.days.forEach(function (raw) {
-    var normalized;
-    try { normalized = normalizeDay(raw); }
-    catch (err) { return; }
-    if (!normalized.slots.length || normalized.date < start || normalized.date > end) return;
-    var weekTotals = dayTotals(normalized);
-    weekPatients += weekTotals.groups.patients;
-    weekScripts += weekTotals.scripts;
-    weekDays++;
-  });
-  if (weekDays > 1) parts.push("Last 7 days " + weekPatients + " patients, " + weekScripts + " scripts");
-  return parts.join(" \u00b7 ") || "Enter counts and the day totals appear here.";
-}
-
 function currentDay() {
   return state.days.get(state.currentDate) || null;
 }
@@ -4147,8 +4103,6 @@ function updateTotals(day) {
     var value = !totals ? 0 : id === "scripts" ? totals.scripts : (totals.groups[id] || 0);
     nodes[i].textContent = String(value);
   }
-  var insight = document.getElementById("tablet-insight");
-  if (insight && document.body.classList.contains("is-tablet")) insight.textContent = tabletInsight(day);
   var table = document.getElementById("stats");
   if (!table || table.hidden || !totals) return;
   var leaves = leafColumns();
