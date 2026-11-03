@@ -1078,11 +1078,10 @@
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
-    .stats thead tr:first-child th:first-child { width: 9%; }
-    .stats thead tr:first-child th.tone-patients { width: 6%; }
-    .stats thead tr:first-child th.tone-acute { width: 22%; }
-    .stats thead tr:first-child th.tone-chronic { width: 34%; }
-    .stats thead tr:first-child th.tone-arv { width: 7%; }
+    .stats thead tr:first-child th:first-child { width: 10%; }
+    .stats thead tr:first-child th.tone-acute { width: 24%; }
+    .stats thead tr:first-child th.tone-chronic { width: 36%; }
+    .stats thead tr:first-child th.tone-arv { width: 8%; }
     .stats thead tr:first-child th.c-scripts { width: 7%; }
     .stats thead tr:first-child th.c-notes { width: 15%; }
     .c-time, .c-single, .c-split, .c-scripts, .c-notes { min-width: 0 !important; }
@@ -1265,7 +1264,6 @@
           <thead>
             <tr>
               <th scope="col" aria-sort="descending"><button type="button" data-ov-sort="date" data-label="Date">Date</button></th>
-              <th scope="col" aria-sort="none"><button type="button" data-ov-sort="patients" data-label="Patients">Patients</button></th>
               <th scope="col" aria-sort="none"><button type="button" data-ov-sort="acute" data-label="Acute">Acute</button></th>
               <th scope="col" aria-sort="none"><button type="button" data-ov-sort="chronic" data-label="Chronic">Chronic</button></th>
               <th scope="col" aria-sort="none"><button type="button" data-ov-sort="arv" data-label="ARV">ARV</button></th>
@@ -1695,6 +1693,13 @@ function leafColumns() {
     else for (var k = 0; k < group.keys.length; k++) cols.push({ group: group, key: group.keys[k] });
   }
   return cols;
+}
+
+function tableLeaves() {
+  var cols = leafColumns();
+  var shown = [];
+  for (var i = 0; i < cols.length; i++) if (cols[i].group.id !== "patients") shown.push(cols[i]);
+  return shown;
 }
 
 function blankValues() {
@@ -2551,7 +2556,7 @@ function renderOverview() {
   if (!tableRows.length) {
     var tr = document.createElement("tr");
     var td = document.createElement("td");
-    td.colSpan = 7;
+    td.colSpan = 6;
     td.className = "ov-empty";
     td.textContent = report.invalidRange ? "From is after To." : "No saved days match.";
     tr.appendChild(td);
@@ -2575,7 +2580,7 @@ function renderOverview() {
     remove.setAttribute("aria-label", "Delete " + item.label);
     dateCell.append(open, remove);
     rowEl.appendChild(dateCell);
-    ["patients", "acute", "chronic", "arv", "scripts"].forEach(function (field) {
+    ["acute", "chronic", "arv", "scripts"].forEach(function (field) {
       var cell = document.createElement("td");
       cell.textContent = String(item[field]);
       if (cat !== "all" && field === cat) cell.classList.add("is-cat");
@@ -3930,7 +3935,7 @@ function renderTable() {
   }
   empty.hidden = true;
   table.hidden = false;
-  var leaves = leafColumns();
+  var leaves = tableLeaves();
   var hasSplit = COLUMN_GROUPS.some(function (group) { return group.type === "split"; });
   table.dataset.cols = String(leaves.length + 1);
   var caption = document.createElement("caption");
@@ -3942,6 +3947,7 @@ function renderTable() {
   hr1.appendChild(headerCell("Time", { className: "sticky-col tone-time c-time", scope: "col", rowSpan: hasSplit ? 2 : 1 }));
   for (var g = 0; g < COLUMN_GROUPS.length; g++) {
     var group = COLUMN_GROUPS[g];
+    if (group.id === "patients") continue;
     if (group.type === "single") {
       hr1.appendChild(headerCell(group.label, {
         className: "tone-" + group.tone + " c-single",
@@ -3993,7 +3999,7 @@ function renderRow(slot, nowId) {
   wrap.textContent = slot.start + "\u2013" + slot.end;
   time.appendChild(wrap);
   tr.appendChild(time);
-  var leaves = leafColumns();
+  var leaves = tableLeaves();
   for (var i = 0; i < leaves.length; i++) {
     var td = document.createElement("td");
     td.className = "tone-" + leaves[i].group.tone + " " + (leaves[i].key ? "c-split" : "c-single");
@@ -4305,8 +4311,7 @@ function addHour() {
   day.slots.push(slot);
   scheduleSave();
   renderAll();
-  var input = document.querySelector(attrSel("data-slot", slot.id) + '[data-group="patients"]');
-  if (input) input.focus();
+  focusSlot(slot.id);
 }
 
 async function startFresh() {
@@ -4433,7 +4438,7 @@ async function deleteDay(date) {
 }
 
 function focusSlot(id) {
-  var input = document.querySelector(attrSel("data-slot", id) + '[data-group="patients"]');
+  var input = document.querySelector(attrSel("data-slot", id) + ".count-tile");
   if (!input) return;
   input.focus();
   if (input.scrollIntoView) input.scrollIntoView({ block: "center", inline: "nearest" });
@@ -4775,11 +4780,7 @@ async function jumpToNow() {
     toast("No hour covers the current time.");
     return;
   }
-  var input = document.querySelector(attrSel("data-slot", id) + '[data-group="patients"]');
-  if (input) {
-    input.focus();
-    input.scrollIntoView({ block: "center", inline: "nearest" });
-  }
+  focusSlot(id);
 }
 
 function openSettings() {
