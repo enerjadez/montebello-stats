@@ -432,9 +432,9 @@
     overscroll-behavior: contain;
   }
   #settings { width: min(560px, calc(100vw - 24px)); }
-  #days, #export, #book-edit { width: min(480px, calc(100vw - 24px)); }
+  #days, #export, #book-edit, #items { width: min(480px, calc(100vw - 24px)); }
   #confirm, #cell-edit { width: min(440px, calc(100vw - 24px)); }
-  #cell-edit form, #book-edit form { margin: 0; }
+  #cell-edit form, #book-edit form, #items form { margin: 0; }
   #cell-edit form { padding: 18px; }
   #cell-edit input {
     font-size: 16px;
@@ -449,7 +449,7 @@
     height: min(88dvh, 900px);
     overflow: hidden;
   }
-  #days[open], #export[open], #confirm[open] { max-height: min(88dvh, 760px); overflow: auto; }
+  #days[open], #export[open], #confirm[open], #book-edit[open], #items[open] { max-height: min(88dvh, 760px); overflow: auto; }
   .dialog-top {
     display: flex;
     justify-content: space-between;
@@ -624,8 +624,16 @@
   .book-head h2 { margin: 0 0 4px; font-size: 1.05rem; }
   .book-head .help-text { margin: 0; max-width: 62ch; }
   .book-count { margin: 0 0 8px; color: var(--muted); font-size: 0.85rem; }
+  .book-actions { display: flex; flex-wrap: wrap; gap: 8px; flex: 0 0 auto; }
   .book-open { font-weight: 700; color: var(--accent); }
   .book-wait { color: var(--muted); }
+  #settings .sheet-actions, #settings .day-extra { padding-left: 0; padding-right: 0; }
+  #settings .day-extra { padding-bottom: 0; }
+  #settings .sheet-actions { margin-top: 4px; }
+  #settings .help { display: block; margin: 8px 0 0; }
+  .settings-today { display: flex; align-items: flex-end; margin: 8px 0; }
+  .settings-today .btn { width: 100%; }
+  #item-list { max-height: min(40dvh, 320px); overflow: auto; }
   .quick-layer { position: fixed; inset: 0; z-index: 60; }
   .quick-backdrop { position: absolute; inset: 0; border: 0; background: color-mix(in srgb, #000 40%, transparent); }
   .quick-panel {
@@ -770,7 +778,6 @@
   body.is-full .top,
   body.is-full .day-nav,
   body.is-full .view-nav,
-  body.is-full #fold-tools,
   body.is-full #fold-hours > summary,
   body.is-full .status-bar { display: none; }
   html:has(body.is-full) { overflow: hidden; height: 100dvh; }
@@ -835,6 +842,7 @@
     .chip { flex: 0 0 auto; }
     .sheet-more { margin-left: 12px; margin-right: 12px; }
     .help { display: none; }
+    #settings .help { display: block; }
     details.fold { margin: 8px; }
     .table-card { margin: 0; }
     details.fold > summary { padding-left: 12px; padding-right: 12px; }
@@ -927,7 +935,6 @@
   body.is-tablet .help,
   body.is-tablet .scroll-hint,
   body.is-tablet .status-bar,
-  body.is-tablet #fold-tools > summary,
   body.is-tablet #fold-hours > summary,
   body.is-tablet .table-full { display: none; }
   body.is-tablet .top { align-items: center; padding: 8px 16px 2px; }
@@ -942,25 +949,6 @@
     flex-direction: column;
     overflow: hidden;
   }
-  body.is-tablet #fold-tools {
-    flex: 0 0 auto;
-    margin: 0 12px 8px;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    overflow: visible;
-  }
-  body.is-tablet .toolbar,
-  body.is-tablet .day-extra {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: clip;
-    gap: 8px;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  body.is-tablet .sheet-actions { display: flex; flex-wrap: nowrap; }
   body.is-tablet .btn,
   body.is-tablet .day-arrow,
   body.is-tablet .view-btn { min-height: 34px; }
@@ -1010,7 +998,7 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
   @media print {
-    .no-print, .col-del, .skip, #overview, #fold-tools, #storage-error, dialog { display: none !important; }
+    .no-print, .col-del, .skip, #overview, #storage-error, dialog { display: none !important; }
     details.fold > summary { display: none !important; }
     html, body, .app {
       height: auto !important;
@@ -1030,7 +1018,6 @@
     body.is-full .top { display: flex !important; }
     body.is-full .day-nav { display: flex !important; }
     body.is-full #day-line { display: block !important; }
-    body.is-full #fold-tools { display: none !important; }
     details.fold, #fold-hours {
       margin: 0 !important;
       border: 0 !important;
@@ -1141,28 +1128,7 @@
     <div id="tablet-stats" class="tablet-stats" aria-label="This day"></div>
     <p id="tablet-insight" class="tablet-insight"></p>
   </div>
-  <details class="fold" id="fold-tools" open>
-    <summary>Day tools</summary>
-  <div class="toolbar no-print">
-    <label class="date-field"><span class="sr-only">Date</span><input type="date" id="work-date"></label>
-    <button type="button" class="btn" id="today-btn">Today</button>
-    <div class="sheet-actions">
-      <button type="button" class="btn" id="open-export">Export</button>
-      <button type="button" class="btn" id="print-btn">Print</button>
-      <button type="button" class="btn" id="sheet-backup">Backup</button>
-    </div>
-  </div>
-  <div class="day-extra no-print">
-    <button type="button" class="btn" id="add-hour">Add hour</button>
-    <button type="button" class="btn" id="now-btn">This hour</button>
-    <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
-  </div>
-  <details class="help no-print">
-    <summary>How to record</summary>
-    <p>Each row is one hour. Tap a count to type it or add 1. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
-  </details>
   <p class="scroll-hint no-print">Swipe sideways for acute, chronic, scripts and notes.</p>
-  </details>
   <div class="hours-pane">
   <details class="fold" id="fold-hours" open>
     <summary>Hours</summary>
@@ -1281,9 +1247,12 @@
     <div class="book-head">
       <div>
         <h2 id="book-title">Out of stock book</h2>
-        <p class="help-text">Write a line when an item is out of stock and a patient is waiting. Collected is the date they collected it. Leave Collected empty until they do. Type the item for now. A medicine list can come later.</p>
+        <p class="help-text">Write a line when an item is out of stock and a patient is waiting. Collected is the date they collected it. Leave Collected empty until they do. Search Item for a medicine from the list.</p>
       </div>
-      <button type="button" class="btn primary" id="book-add">Add line</button>
+      <div class="book-actions">
+        <button type="button" class="btn" id="book-items">Items</button>
+        <button type="button" class="btn primary" id="book-add">Add line</button>
+      </div>
     </div>
     <p id="book-count" class="book-count"></p>
     <div class="ov-table-wrap">
@@ -1366,6 +1335,31 @@
       <p class="help-text" id="settings-day-totals">Totals for the day open on the sheet.</p>
     </section>
     <section class="settings-section">
+      <h3>Day tools</h3>
+      <div class="row-2">
+        <label class="field">Date
+          <input type="date" id="work-date">
+        </label>
+        <div class="settings-today">
+          <button type="button" class="btn" id="today-btn">Today</button>
+        </div>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="btn" id="open-export">Export</button>
+        <button type="button" class="btn" id="print-btn">Print</button>
+        <button type="button" class="btn" id="sheet-backup">Backup</button>
+      </div>
+      <div class="day-extra">
+        <button type="button" class="btn" id="add-hour">Add hour</button>
+        <button type="button" class="btn" id="now-btn">This hour</button>
+        <button type="button" class="btn" id="clear-numbers">Clear numbers</button>
+      </div>
+      <details class="help">
+        <summary>How to record</summary>
+        <p>Each row is one hour. Tap a count to type it or add 1. Scripts is acute + chronic + ARV. 5+ means 5 or more acute items. 9+ means 9 or more chronic items.</p>
+      </details>
+    </section>
+    <section class="settings-section">
       <h3>Appearance</h3>
       <div class="theme-choices" role="radiogroup" aria-label="Theme">
         <label class="theme-card"><input type="radio" name="theme" value="light"><span class="swatch swatch-light"></span><span>Light</span></label>
@@ -1434,7 +1428,7 @@
     </section>
     <section class="settings-section danger-zone">
       <h3>Erase statistics</h3>
-      <p class="help-text">Deletes every saved day in this browser. Files already in Downloads, and the backup copies above, stay.</p>
+      <p class="help-text">Deletes every saved day in this browser. The out of stock book and the item list stay. Files already in Downloads, and the backup copies above, stay.</p>
       <button type="button" class="btn danger" id="erase-all">Erase all days</button>
     </section>
     <p class="help-text">Montebello Stats · schema 1 · works offline in this file</p>
@@ -1531,13 +1525,36 @@
         <input type="tel" id="book-contact" maxlength="40" autocomplete="tel" inputmode="tel">
       </label>
       <label class="field">Item
-        <input type="text" id="book-item" maxlength="160" autocomplete="off">
+        <input type="text" id="book-item" maxlength="160" autocomplete="off" list="book-item-list" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="book-item-hint" enterkeyhint="done">
+        <datalist id="book-item-list"></datalist>
       </label>
+      <p class="help-text" id="book-item-hint">Search the item list. Add a missing medicine under Items.</p>
       <p class="help-text">Collected stays empty until the patient collects the item.</p>
       <div class="dialog-actions">
         <button type="submit" class="btn primary" value="save">Save</button>
         <button type="submit" class="btn" value="" formnovalidate>Cancel</button>
       </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="items" aria-labelledby="items-title">
+  <form id="items-form">
+    <div class="dialog-top">
+      <h2 id="items-title">Items</h2>
+      <button type="button" class="btn" id="items-close">Close</button>
+    </div>
+    <div class="dialog-body">
+      <label class="field">Name
+        <input type="text" id="item-name" maxlength="160" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus>
+      </label>
+      <div class="dialog-actions">
+        <button type="submit" class="btn primary" id="item-save">Add item</button>
+        <button type="button" class="btn" id="item-cancel" hidden>Cancel</button>
+      </div>
+      <p class="help-text">Add the medicines you record in the book. Search on a book line uses this list. Removing or renaming an item leaves book lines already saved as they are.</p>
+      <p class="help-text" id="items-empty" hidden>No items yet.</p>
+      <ul id="item-list" class="plain-list"></ul>
     </div>
   </form>
 </dialog>
@@ -1550,12 +1567,14 @@
    days    — one record per YYYY-MM-DD
    kv      — settings
    backups — the last 7 to 14 full JSON snapshots
-   book    — out-of-stock follow-up lines
-   Schema 2 adds the book store. Missing day keys are filled on load.
+   book    — out-of-stock follow-up lines. item is the medicine name.
+   items   — the medicine catalogue. Book lines store the name, not the id.
+   Schema 2 adds the book store. Schema 3 adds the items store.
+   Missing day keys are filled on load.
    Bump DB_VERSION only when a stored shape must be rewritten. */
 
 var DB_NAME = "montebello-stats";
-var DB_VERSION = 2;
+var DB_VERSION = 3;
 var SESSION_DATE_KEY = "montebello-stats-date";
 var THEME_KEY = "montebello-stats-theme";
 
@@ -1585,10 +1604,14 @@ var state = {
   pendingBackup: null,
   backupRecords: [],
   backupLock: false,
-  book: []
+  book: [],
+  items: []
 };
 var cellEdit = { slotId: "", groupId: "", key: "" };
 var bookEditId = "";
+var itemEditId = "";
+var itemSearchTimer = 0;
+var itemSearchSeq = 0;
 var tombstones = new Set();
 var saveTimer = 0;
 var settingsTimer = 0;
@@ -2793,6 +2816,7 @@ function openBookEdit(id) {
   document.getElementById("book-contact").value = line ? line.contact : "";
   document.getElementById("book-item").value = line ? line.item : "";
   document.getElementById("book-collected").value = line && line.collected ? line.collected : "";
+  refreshItemList(line ? line.item : "");
   var dialog = document.getElementById("book-edit");
   if (!dialog.open) dialog.showModal();
   document.getElementById("book-date").focus();
@@ -2806,8 +2830,12 @@ async function saveBookFromForm() {
   }
   var name = document.getElementById("book-name").value;
   var contact = document.getElementById("book-contact").value;
-  var item = document.getElementById("book-item").value;
-  if (!name.trim() && !item.trim()) {
+  var item = resolvedBookItem(document.getElementById("book-item").value);
+  if (item === null) {
+    toast("Choose an item from the list, or add it under Items.");
+    return;
+  }
+  if (!name.trim() && !item) {
     toast("Enter a patient name or an item.");
     return;
   }
@@ -2885,6 +2913,247 @@ async function applyBookImport(lines, mode) {
   await idbPutMany("book", writes);
 }
 
+function normalizeItem(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  var name = typeof raw.name === "string" ? raw.name.trim().slice(0, 160) : "";
+  if (!name) return null;
+  return {
+    id: typeof raw.id === "string" && raw.id ? raw.id : uid(),
+    name: name,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString()
+  };
+}
+
+function itemsForBackup() {
+  var items = [];
+  var source = state.items || [];
+  for (var i = 0; i < source.length; i++) {
+    var item = normalizeItem(source[i]);
+    if (item) items.push(item);
+  }
+  items.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0; });
+  return items;
+}
+
+function findItem(id) {
+  for (var i = 0; i < state.items.length; i++) if (state.items[i].id === id) return state.items[i];
+  return null;
+}
+
+function findItemByName(name) {
+  var key = String(name || "").trim().toLowerCase();
+  if (!key) return null;
+  for (var i = 0; i < state.items.length; i++) {
+    if (state.items[i].name.toLowerCase() === key) return state.items[i];
+  }
+  return null;
+}
+
+function matchItemNames(items, query, limit) {
+  var q = String(query || "").trim().toLowerCase();
+  var matches = [];
+  var source = items || [];
+  for (var i = 0; i < source.length; i++) {
+    var name = source[i] && source[i].name ? source[i].name : "";
+    if (!name) continue;
+    if (!q || name.toLowerCase().indexOf(q) >= 0) matches.push(name);
+  }
+  matches.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0; });
+  if (limit && matches.length > limit) matches = matches.slice(0, limit);
+  return matches;
+}
+
+function resolvedBookItem(raw) {
+  var text = String(raw || "").trim();
+  if (!text) return "";
+  var found = findItemByName(text);
+  return found ? found.name : null;
+}
+
+function refreshItemList(query) {
+  var list = document.getElementById("book-item-list");
+  var hint = document.getElementById("book-item-hint");
+  if (!list) return Promise.resolve();
+  var seq = ++itemSearchSeq;
+  return Promise.resolve().then(function () {
+    if (seq !== itemSearchSeq) return;
+    var source = state.items || [];
+    var q = String(query || "").trim();
+    var matches = matchItemNames(source, q, 12);
+    list.replaceChildren();
+    for (var i = 0; i < matches.length; i++) {
+      var option = document.createElement("option");
+      option.value = matches[i];
+      list.appendChild(option);
+    }
+    if (!hint) return;
+    var text = "Search the item list. Add a missing medicine under Items.";
+    if (!source.length) text = "No items yet. Add medicines under Items.";
+    else if (q && !matches.length) text = "No item matches. Add it under Items.";
+    else if (q && matchItemNames(source, q, 13).length > 12) text = "Showing 12 matches. Keep typing.";
+    if (hint.textContent !== text) hint.textContent = text;
+  });
+}
+
+function queueItemSearch() {
+  var input = document.getElementById("book-item");
+  clearTimeout(itemSearchTimer);
+  itemSearchTimer = setTimeout(function () {
+    refreshItemList(input ? input.value : "");
+  }, 150);
+}
+
+function resetItemForm() {
+  itemEditId = "";
+  var input = document.getElementById("item-name");
+  var save = document.getElementById("item-save");
+  var cancel = document.getElementById("item-cancel");
+  if (input) input.value = "";
+  if (save) save.textContent = "Add item";
+  if (cancel) cancel.hidden = true;
+}
+
+function renderItems() {
+  var list = document.getElementById("item-list");
+  var empty = document.getElementById("items-empty");
+  if (!list) return;
+  var items = itemsForBackup();
+  list.replaceChildren();
+  if (empty) empty.hidden = items.length > 0;
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var li = document.createElement("li");
+    var name = document.createElement("span");
+    name.textContent = item.name;
+    var actions = document.createElement("div");
+    actions.className = "book-actions";
+    var edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "btn";
+    edit.dataset.itemEdit = item.id;
+    edit.textContent = "Edit";
+    edit.setAttribute("aria-label", "Edit " + item.name);
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "btn";
+    remove.dataset.itemDelete = item.id;
+    remove.textContent = "Remove";
+    remove.setAttribute("aria-label", "Remove " + item.name);
+    actions.append(edit, remove);
+    li.append(name, actions);
+    list.appendChild(li);
+  }
+  var field = document.getElementById("book-item");
+  refreshItemList(field ? field.value : "");
+}
+
+function openItems() {
+  resetItemForm();
+  renderItems();
+  var dialog = document.getElementById("items");
+  if (!dialog.open) dialog.showModal();
+  var input = document.getElementById("item-name");
+  if (input) input.focus();
+}
+
+function beginItemEdit(id) {
+  var item = findItem(id);
+  if (!item) return;
+  itemEditId = item.id;
+  var input = document.getElementById("item-name");
+  var save = document.getElementById("item-save");
+  var cancel = document.getElementById("item-cancel");
+  if (input) input.value = item.name;
+  if (save) save.textContent = "Save item";
+  if (cancel) cancel.hidden = false;
+  if (input) {
+    input.focus();
+    if (input.select) input.select();
+  }
+}
+
+async function saveItemFromForm() {
+  var input = document.getElementById("item-name");
+  var existing = itemEditId ? findItem(itemEditId) : null;
+  var item = normalizeItem({
+    id: existing ? existing.id : uid(),
+    name: input ? input.value : "",
+    createdAt: existing ? existing.createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+  if (!item) {
+    toast("Enter an item name.");
+    return;
+  }
+  var clash = findItemByName(item.name);
+  if (clash && clash.id !== item.id) {
+    toast("That item is already in the list.");
+    return;
+  }
+  if (existing) {
+    for (var i = 0; i < state.items.length; i++) if (state.items[i].id === item.id) state.items[i] = item;
+  } else state.items.push(item);
+  try {
+    await idbPut("items", item);
+    setSaveStatus("saved");
+  } catch (err) {
+    onSaveError(err);
+  }
+  resetItemForm();
+  renderItems();
+  toast(existing ? "Item updated." : "Item added.");
+}
+
+async function deleteItem(id) {
+  var item = findItem(id);
+  if (!item) return;
+  var ok = await ask({
+    title: "Remove this item?",
+    message: "Remove " + item.name + " from the item list? Book lines that already use it stay as they are.",
+    buttons: [{ value: "cancel", label: "Keep" }, { value: "ok", label: "Remove", danger: true }]
+  });
+  if (ok !== "ok") return;
+  state.items = state.items.filter(function (entry) { return entry.id !== id; });
+  if (itemEditId === id) resetItemForm();
+  try {
+    await idbDelete("items", id);
+    setSaveStatus("saved");
+  } catch (err) {
+    onSaveError(err);
+  }
+  renderItems();
+}
+
+async function applyItemsImport(items, mode) {
+  if (!Array.isArray(items) || !state.db || !state.db.objectStoreNames.contains("items")) return;
+  var incoming = [];
+  for (var i = 0; i < items.length; i++) {
+    var item = normalizeItem(items[i]);
+    if (item) incoming.push(item);
+  }
+  if (mode === "replace") {
+    var ids = state.items.map(function (entry) { return entry.id; });
+    state.items = [];
+    await idbDeleteMany("items", ids);
+  }
+  var writes = [];
+  for (var n = 0; n < incoming.length; n++) {
+    var next = incoming[n];
+    var current = findItem(next.id);
+    if (mode === "merge" && current) {
+      var a = Date.parse(current.updatedAt) || 0;
+      var b = Date.parse(next.updatedAt) || 0;
+      if (a > b) continue;
+      for (var r = 0; r < state.items.length; r++) if (state.items[r].id === next.id) state.items[r] = next;
+    } else if (current) {
+      for (var u = 0; u < state.items.length; u++) if (state.items[u].id === next.id) state.items[u] = next;
+    } else state.items.push(next);
+    writes.push(next);
+  }
+  await idbPutMany("items", writes);
+}
+
 function readCellInput() {
   var input = document.getElementById("cell-edit-value");
   var cleaned = String(input && input.value || "").replace(/\D/g, "").slice(0, 5);
@@ -2937,7 +3206,7 @@ function buildBackupObject() {
   delete settings.key;
   return {
     app: "Montebello Stats",
-    schema: 2,
+    schema: 3,
     kind: "full-backup",
     hospital: "Montebello Hospital",
     title: "Hourly outpatient statistics \u2013 prescription and patient volumes",
@@ -2945,7 +3214,8 @@ function buildBackupObject() {
     dayCount: days.length,
     settings: settings,
     days: days,
-    book: bookLinesForBackup()
+    book: bookLinesForBackup(),
+    items: itemsForBackup()
   };
 }
 
@@ -3535,6 +3805,9 @@ function openDb() {
       if (event.oldVersion < 2 && !db.objectStoreNames.contains("book")) {
         db.createObjectStore("book", { keyPath: "id" });
       }
+      if (event.oldVersion < 3 && !db.objectStoreNames.contains("items")) {
+        db.createObjectStore("items", { keyPath: "id" });
+      }
     };
     req.onsuccess = function () {
       var db = req.result;
@@ -3616,6 +3889,14 @@ async function loadState() {
     for (var b = 0; b < lines.length; b++) {
       var line = normalizeBook(lines[b]);
       if (line) state.book.push(line);
+    }
+  }
+  state.items = [];
+  if (state.db.objectStoreNames.contains("items")) {
+    var storedItems = await idbGetAll("items");
+    for (var n = 0; n < storedItems.length; n++) {
+      var item = normalizeItem(storedItems[n]);
+      if (item) state.items.push(item);
     }
   }
 }
@@ -4957,7 +5238,7 @@ async function importBackupFile(file) {
   }
   var choice = await ask({
     title: "Restore backup?",
-    message: "This file has " + incoming.length + " day" + (incoming.length === 1 ? "" : "s") + ". This device has " + state.days.size + ". Merge keeps the newer copy of each day. Replace all swaps the saved statistics for the file." + (Array.isArray(data.book) ? " The book in this file has " + data.book.length + " line" + (data.book.length === 1 ? "" : "s") + "." : "") + (skipped ? " " + skipped + " could not be read." : "") + (data.schema && data.schema !== 1 && data.schema !== 2 ? " The file uses schema " + data.schema + "." : ""),
+    message: "This file has " + incoming.length + " day" + (incoming.length === 1 ? "" : "s") + ". This device has " + state.days.size + ". Merge keeps the newer copy of each day. Replace all swaps the saved statistics for the file." + (Array.isArray(data.book) ? " The book in this file has " + data.book.length + " line" + (data.book.length === 1 ? "" : "s") + "." : "") + (Array.isArray(data.items) ? " The item list in this file has " + data.items.length + " item" + (data.items.length === 1 ? "" : "s") + "." : "") + (skipped ? " " + skipped + " could not be read." : "") + (data.schema && data.schema !== 1 && data.schema !== 2 && data.schema !== 3 ? " The file uses schema " + data.schema + "." : ""),
     buttons: [
       { value: "cancel", label: "Cancel" },
       { value: "merge", label: "Merge", primary: true },
@@ -4968,7 +5249,9 @@ async function importBackupFile(file) {
   try {
     await applyImport(incoming, choice, data.settings);
     if (Array.isArray(data.book)) await applyBookImport(data.book, choice);
+    if (Array.isArray(data.items)) await applyItemsImport(data.items, choice);
     renderBook();
+    renderItems();
     toast(choice === "merge" ? "Backup merged." : "Backup restored.");
   } catch (err) {
     console.error(err);
@@ -5016,7 +5299,7 @@ async function applyImport(incoming, mode, settings) {
 async function eraseAll() {
   var first = await ask({
     title: "Erase all statistics?",
-    message: "This deletes every saved day on this device. The out of stock book is kept. Backup files already in Downloads are kept. Saved backup copies in Settings are kept.",
+    message: "This deletes every saved day on this device. The out of stock book and the item list are kept. Backup files already in Downloads are kept. Saved backup copies in Settings are kept.",
     buttons: [
       { value: "cancel", label: "Cancel" },
       { value: "backup", label: "Backup first", primary: true },
@@ -5135,9 +5418,7 @@ function setTabletMode(on) {
   var glance = document.getElementById("tablet-glance");
   if (glance) glance.hidden = !on;
   if (on) {
-    var tools = document.getElementById("fold-tools");
     var hours = document.getElementById("fold-hours");
-    if (tools) tools.open = true;
     if (hours) hours.open = true;
   }
   try { sessionStorage.setItem("montebello-stats-tablet", on ? "on" : "off"); } catch (err) {}
@@ -5270,7 +5551,29 @@ function bind() {
   document.getElementById("view-sheet").addEventListener("click", function () { showView("sheet"); });
   document.getElementById("view-overview").addEventListener("click", function () { showView("overview"); });
   document.getElementById("view-book").addEventListener("click", function () { showView("book"); });
+  document.getElementById("book-items").addEventListener("click", openItems);
   document.getElementById("book-add").addEventListener("click", function () { openBookEdit(""); });
+  document.getElementById("book-item").addEventListener("input", queueItemSearch);
+  document.getElementById("book-item").addEventListener("focus", queueItemSearch);
+  document.getElementById("items-close").addEventListener("click", function () {
+    document.getElementById("items").close("");
+  });
+  document.getElementById("item-cancel").addEventListener("click", resetItemForm);
+  document.getElementById("items-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    saveItemFromForm();
+  });
+  document.getElementById("item-list").addEventListener("click", function (event) {
+    var el = eventEl(event);
+    if (!el || !el.closest) return;
+    var edit = el.closest("[data-item-edit]");
+    if (edit) { beginItemEdit(edit.dataset.itemEdit); return; }
+    var remove = el.closest("[data-item-delete]");
+    if (remove) deleteItem(remove.dataset.itemDelete);
+  });
+  document.getElementById("items").addEventListener("close", function () {
+    resetItemForm();
+  });
   document.getElementById("book-edit-close").addEventListener("click", function () {
     document.getElementById("book-edit").close("");
   });
@@ -5287,13 +5590,18 @@ function bind() {
     if (!submitter || submitter.value !== "save") return;
     var date = document.getElementById("book-date").value;
     var name = document.getElementById("book-name").value;
-    var item = document.getElementById("book-item").value;
+    var item = resolvedBookItem(document.getElementById("book-item").value);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       event.preventDefault();
       toast("Choose a date.");
       return;
     }
-    if (!name.trim() && !item.trim()) {
+    if (item === null) {
+      event.preventDefault();
+      toast("Choose an item from the list, or add it under Items.");
+      return;
+    }
+    if (!name.trim() && !item) {
       event.preventDefault();
       toast("Enter a patient name or an item.");
     }
@@ -5722,6 +6030,22 @@ function selfTest() {
       var bookLine = normalizeBook({ date: "2026-10-31", name: "  Ana  ", contact: " 082 ", item: " item ", collected: "nope" });
       assert(bookLine.name === "Ana" && bookLine.contact === "082" && bookLine.item === "item" && bookLine.collected === "", "book line");
       assert(normalizeBook({ date: "bad", name: "A" }) === null, "book date");
+      assert(normalizeItem({ name: "  Amox  " }).name === "Amox", "item name");
+      assert(normalizeItem({ name: "   " }) === null, "blank item");
+      var catalogue = [
+        normalizeItem({ id: "a", name: "Amoxicillin" }),
+        normalizeItem({ id: "b", name: "Paracetamol" })
+      ];
+      assert(matchItemNames(catalogue, "amox", 12).join(",") === "Amoxicillin", "item search");
+      assert(matchItemNames(catalogue, "zzz", 12).length === 0, "item search miss");
+      assert(matchItemNames(catalogue, "", 1).length === 1, "item search limit");
+      state.items = catalogue;
+      state.book = [];
+      var backup = buildBackupObject();
+      assert(backup.schema === 3 && backup.items.length === 2 && Array.isArray(backup.book) && !backup.items[0].key, "schema 3 items");
+      var partial = buildExportObject([]);
+      assert(partial.schema === 1 && partial.items == null && partial.book == null, "day export stays schema 1");
+      state.items = [];
     },
     function backupDue() {
       var base = defaultSettings();
