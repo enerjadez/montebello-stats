@@ -63,6 +63,7 @@
     --sub-arv: #f8f1e3;
     --banner: #e8f4f2;
     color-scheme: light;
+    accent-color: var(--accent);
   }
   [data-theme="dark"] {
     --bg: #101614;
@@ -1459,7 +1460,7 @@
   </div>
 </div>
 
-<dialog id="settings" aria-labelledby="settings-title">
+<dialog closedby="any" id="settings" aria-labelledby="settings-title">
   <div class="dialog-top">
     <h2 id="settings-title">Settings</h2>
     <button type="button" class="btn" id="settings-close">Close</button>
@@ -1566,7 +1567,7 @@
   </div>
 </dialog>
 
-<dialog id="days" aria-labelledby="days-title">
+<dialog closedby="any" id="days" aria-labelledby="days-title">
   <div class="dialog-top">
     <h2 id="days-title">Saved days</h2>
     <button type="button" class="btn" id="days-close">Close</button>
@@ -1577,7 +1578,7 @@
   </div>
 </dialog>
 
-<dialog id="export" aria-labelledby="export-title">
+<dialog closedby="any" id="export" aria-labelledby="export-title">
   <div class="dialog-top">
     <h2 id="export-title">Export</h2>
     <button type="button" class="btn" id="export-close">Close</button>
@@ -1606,7 +1607,7 @@
   </div>
 </dialog>
 
-<dialog id="table-edit" aria-labelledby="table-edit-title">
+<dialog closedby="any" id="table-edit" aria-labelledby="table-edit-title">
   <div class="dialog-top">
     <h2 id="table-edit-title">Edit table</h2>
     <button type="button" class="btn" id="table-edit-close">Close</button>
@@ -1634,7 +1635,7 @@
   </div>
 </dialog>
 
-<dialog id="confirm" aria-labelledby="confirm-title">
+<dialog closedby="any" id="confirm" aria-labelledby="confirm-title">
   <form method="dialog">
     <h2 id="confirm-title"></h2>
     <p id="confirm-message"></p>
@@ -1642,7 +1643,7 @@
   </form>
 </dialog>
 
-<dialog id="cell-edit" aria-labelledby="cell-edit-title">
+<dialog closedby="any" id="cell-edit" aria-labelledby="cell-edit-title">
   <form method="dialog" id="cell-edit-form">
     <h2 id="cell-edit-title">Count</h2>
     <p id="cell-edit-when" class="help-text"></p>
@@ -1657,7 +1658,7 @@
   </form>
 </dialog>
 
-<dialog id="book-waiting" aria-labelledby="book-waiting-title">
+<dialog closedby="any" id="book-waiting" aria-labelledby="book-waiting-title">
   <form method="dialog">
     <h2 id="book-waiting-title">Not collected</h2>
     <p id="book-waiting-scope" class="help-text"></p>
@@ -1669,7 +1670,7 @@
   </form>
 </dialog>
 
-<dialog id="book-edit" aria-labelledby="book-edit-title">
+<dialog closedby="any" id="book-edit" aria-labelledby="book-edit-title">
   <form method="dialog" id="book-edit-form">
     <div class="dialog-top">
       <h2 id="book-edit-title">Book line</h2>
@@ -1704,7 +1705,7 @@
   </form>
 </dialog>
 
-<dialog id="items" aria-labelledby="items-title">
+<dialog closedby="any" id="items" aria-labelledby="items-title">
   <form id="items-form">
     <div class="dialog-top">
       <h2 id="items-title">Items</h2>
@@ -5488,6 +5489,16 @@ async function jumpToNow() {
   focusSlot(id);
 }
 
+function bindLightDismiss(dialog) {
+  if (!dialog || "closedBy" in HTMLDialogElement.prototype) return;
+  dialog.addEventListener("click", function (event) {
+    if (event.target !== dialog) return;
+    var rect = dialog.getBoundingClientRect();
+    var inside = rect.top <= event.clientY && event.clientY <= rect.top + rect.height && rect.left <= event.clientX && event.clientX <= rect.left + rect.width;
+    if (!inside) dialog.close();
+  });
+}
+
 function closeDialog(id) {
   var dialog = document.getElementById(id);
   if (dialog && dialog.open) dialog.close();
@@ -6304,10 +6315,15 @@ function bind() {
   document.getElementById("days-close").addEventListener("click", function () { document.getElementById("days").close(); });
   document.getElementById("export-close").addEventListener("click", function () { document.getElementById("export").close(); });
   document.getElementById("confirm").addEventListener("close", function () {
+    var dialog = document.getElementById("confirm");
+    var value = dialog.returnValue || "";
+    dialog.returnValue = "";
     var resolve = confirmWait;
     confirmWait = null;
-    if (resolve) resolve(document.getElementById("confirm").returnValue || "");
+    if (resolve) resolve(value);
   });
+  var lightDialogs = document.querySelectorAll("dialog");
+  for (var ld = 0; ld < lightDialogs.length; ld++) bindLightDismiss(lightDialogs[ld]);
   document.getElementById("stats").addEventListener("input", function (event) {
     if (event.target.dataset.field === "notes") {
       var slot = findSlot(event.target.dataset.slot);
